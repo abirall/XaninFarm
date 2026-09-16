@@ -20,8 +20,8 @@
 
   <link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml">
 
-  {# Fraunces for display, Inter for text - preconnected so the hero does not
-     reflow after first paint. #}
+  {% comment %} Fraunces for display, Inter for text - preconnected so the hero does not
+     reflow after first paint. {% endcomment %}
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet"
@@ -29,14 +29,14 @@
 
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
   {% if tailwind_cdn_fallback %}
-    {# Development escape hatch for when `npm run build` has not been run.
-       Never enabled in production - see TAILWIND_CDN_FALLBACK. #}
+    {% comment %} Development escape hatch for when `npm run build` has not been run.
+       Never enabled in production - see TAILWIND_CDN_FALLBACK. {% endcomment %}
     <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
   {% endif %}
 
-  {# htmx from a CDN so there is no vendored binary in the repo. To remove the
+  {% comment %} htmx from a CDN so there is no vendored binary in the repo. To remove the
      third-party dependency, drop htmx.min.js into static/js/ and point this at
-     {% templatetag openblock %} static 'js/htmx.min.js' {% templatetag closeblock %}. #}
+     {% templatetag openblock %} static 'js/htmx.min.js' {% templatetag closeblock %}. {% endcomment %}
   <script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js" defer></script>
   <script src="{% static 'js/app.js' %}" defer></script>
   {% block extra_head %}{% endblock %}
@@ -49,8 +49,8 @@
 
   {% include "partials/_header.html" %}
 
-  {# Toasts live outside <main> so an HTMX swap of page content cannot wipe
-     them, and so screen readers announce them wherever focus happens to be. #}
+  {% comment %} Toasts live outside <main> so an HTMX swap of page content cannot wipe
+     them, and so screen readers announce them wherever focus happens to be. {% endcomment %}
   <div id="toasts"
        class="pointer-events-none fixed inset-x-0 top-20 z-50 flex flex-col items-center gap-2 px-4"
        role="status" aria-live="polite">

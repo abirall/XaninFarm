@@ -4,6 +4,10 @@
 {% block title %}{% translate "Batches" %} - {% translate "Dashboard" %}{% endblock %}
 {% block dash_title %}{% translate "Batch register" %}{% endblock %}
 
+{% block dash_subtitle %}
+  <p class="mt-1 text-sm text-charcoal-500">{% translate "Every batch received, with its expiry and remaining quantity." %}</p>
+{% endblock %}
+
 {% block dash_sidebar %}
   {% include "dashboard/partials/_sidebar.html" with current="batches" %}
 {% endblock %}

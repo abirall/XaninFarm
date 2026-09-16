@@ -30,7 +30,11 @@
   }
 
   body {
-    @apply bg-cream-100 font-sans text-charcoal-800 antialiased;
+    @apply bg-cream-50 font-sans text-charcoal-800 antialiased;
+    background-image:
+      linear-gradient(180deg, rgba(255,255,255,0.74), rgba(250,247,240,0.94)),
+      radial-gradient(circle at 20% 0%, rgba(228,178,58,0.10), transparent 28rem),
+      radial-gradient(circle at 90% 8%, rgba(44,101,67,0.10), transparent 26rem);
   }
 
   h1,
@@ -77,27 +81,27 @@
 
   /* --- Buttons --- */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm
       font-semibold tracking-wide transition duration-200 ease-out-soft
       disabled:cursor-not-allowed disabled:opacity-50;
   }
 
   .btn-primary {
-    @apply btn bg-farm-700 text-cream-50 shadow-sm hover:bg-farm-800
-      hover:shadow-card active:scale-[0.98];
+    @apply btn bg-farm-800 text-cream-50 shadow-sm hover:bg-farm-900
+      hover:shadow-card active:scale-[0.98] hover:-translate-y-0.5;
   }
 
   .btn-secondary {
     @apply btn border border-charcoal-200 bg-white text-charcoal-800
-      hover:border-farm-600 hover:text-farm-700 active:scale-[0.98];
+      hover:border-farm-600 hover:text-farm-700 active:scale-[0.98] hover:-translate-y-0.5 hover:shadow-sm;
   }
 
   .btn-honey {
-    @apply btn bg-honey-400 text-charcoal-900 shadow-sm hover:bg-honey-300 active:scale-[0.98];
+    @apply btn bg-honey-400 text-charcoal-900 shadow-sm ring-1 ring-honey-500/20 hover:bg-honey-300 active:scale-[0.98] hover:-translate-y-0.5;
   }
 
   .btn-ghost {
-    @apply btn text-charcoal-700 hover:bg-cream-200 hover:text-charcoal-900;
+    @apply btn text-charcoal-700 hover:bg-cream-200 hover:text-charcoal-900 active:scale-[0.98];
   }
 
   .btn-danger {
@@ -114,12 +118,16 @@
   }
 
   .surface {
-    @apply rounded-2xl border border-cream-300 bg-cream-50;
+    @apply rounded-2xl border border-cream-300 bg-cream-50 shadow-inset;
+  }
+
+  .glass-panel {
+    @apply border border-white/20 bg-charcoal-900/35 shadow-card backdrop-blur-md;
   }
 
   /* --- Badges --- */
   .badge {
-    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold;
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold shadow-sm;
   }
 
   .badge-farm {
@@ -158,6 +166,14 @@
   /* --- Type --- */
   .eyebrow {
     @apply text-xs font-semibold uppercase tracking-[0.18em] text-farm-700;
+  }
+
+  .section-heading {
+    @apply mt-3 max-w-2xl font-display text-display-sm font-semibold tracking-normal text-charcoal-900;
+  }
+
+  .section-copy {
+    @apply mt-3 max-w-2xl leading-relaxed text-charcoal-600;
   }
 
   /* prose-stone is the typography plugin's warmest neutral theme, which is the
@@ -212,5 +228,14 @@
   .htmx-request .htmx-indicator,
   .htmx-request.htmx-indicator {
     @apply inline-flex;
+  }
+
+  /* Scroll reveal animations */
+  .reveal {
+    @apply opacity-0 translate-y-4 transition-all duration-700 ease-out-soft;
+  }
+  
+  .reveal.is-visible {
+    @apply opacity-100 translate-y-0;
   }
 }

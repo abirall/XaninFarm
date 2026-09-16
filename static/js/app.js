@@ -182,14 +182,40 @@
     document.querySelectorAll('[data-menu-toggle][aria-expanded="true"]').forEach(toggleMobileNav);
   });
 
+  // ---------------------------------------------------------------------
+  // Scroll reveal
+  // ---------------------------------------------------------------------
+  function initReveal() {
+    if (!('IntersectionObserver' in window)) {
+      document.querySelectorAll('.reveal').forEach(function (el) {
+        el.classList.add('is-visible');
+      });
+      return;
+    }
+    var observer = new IntersectionObserver(function (entries, obs) {
+      entries.forEach(function (entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-visible');
+          obs.unobserve(entry.target);
+        }
+      });
+    }, { rootMargin: '0px 0px -50px 0px', threshold: 0 });
+
+    document.querySelectorAll('.reveal:not(.is-visible)').forEach(function (el) {
+      observer.observe(el);
+    });
+  }
+
   // Toasts arriving with the page, and with every htmx swap.
   document.addEventListener('DOMContentLoaded', function () {
     scheduleToasts();
     syncCartCount();
+    initReveal();
   });
   document.body.addEventListener('htmx:afterSwap', function () {
     scheduleToasts();
     syncCartCount();
+    initReveal();
   });
 
   // Cart mutations announce themselves with HX-Trigger (see apps.core.mixins).

@@ -7,11 +7,17 @@
 {% block auth_subtitle %}{% translate "Your basket, your addresses and your order history are waiting." %}{% endblock %}
 
 {% block auth_body %}
-  <form action="{% url 'accounts:login' %}" method="post" class="space-y-5">
+  {% if next == "/dashboard/" %}
+    <div class="mb-5 rounded-xl border border-honey-200 bg-honey-50 px-4 py-3 text-sm text-charcoal-700">
+      {% translate "Sign in with a staff account to open the farm dashboard." %}
+    </div>
+  {% endif %}
+
+  <form action="{% url 'accounts:login' %}{% if next %}?next={{ next|urlencode }}{% endif %}" method="post" class="space-y-5">
     {% csrf_token %}
 
     {% if form.non_field_errors %}
-      <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+      <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
         {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
       </div>
     {% endif %}
@@ -25,11 +31,16 @@
       </a>
     </div>
 
-    {# Carried through so a customer sent here from the basket lands back on it.
-       LoginView validates this against the allowed hosts before redirecting. #}
+    {% comment %} Carried through so a customer sent here from the basket lands back on it.
+       LoginView validates this against the allowed hosts before redirecting. {% endcomment %}
     {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
 
-    <button type="submit" class="btn-primary w-full !py-3">{% translate "Sign in" %}</button>
+    <button type="submit" class="btn-primary w-full !py-3">
+      {% translate "Sign in" %}
+      <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14m-6-6 6 6-6 6"/>
+      </svg>
+    </button>
   </form>
 {% endblock %}
 

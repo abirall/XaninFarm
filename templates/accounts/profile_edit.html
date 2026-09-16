@@ -33,8 +33,8 @@
           {% include "partials/_field.html" with field=form.full_name %}
           {% include "partials/_field.html" with field=form.phone %}
 
-          {# Email is the login identifier, so it is shown but not editable
-             here: changing it needs a verification round-trip. #}
+          {% comment %} Email is the login identifier, so it is shown but not editable
+             here: changing it needs a verification round-trip. {% endcomment %}
           <div>
             <span class="form-label">{% translate "Email" %}</span>
             <p class="rounded-xl bg-cream-100 px-3.5 py-2.5 text-sm text-charcoal-600">{{ user.email }}</p>

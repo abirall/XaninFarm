@@ -42,8 +42,8 @@
           <div class="mt-4 space-y-3">
             {% for address in form.address.field.queryset %}
               <label for="address-{{ address.pk }}" class="block">
-                {# Changing the address re-prices the order on the server: the
-                   zone decides the delivery fee and the minimum. #}
+                {% comment %} Changing the address re-prices the order on the server: the
+                   zone decides the delivery fee and the minimum. {% endcomment %}
                 <input type="radio" id="address-{{ address.pk }}" name="address" value="{{ address.pk }}"
                        class="peer sr-only"
                        {% if selected_address.pk == address.pk %}checked{% endif %}
@@ -96,8 +96,8 @@
 
           <div class="mt-4 space-y-3">
             {% for radio in form.payment_method %}
-              {# The input is written out by hand rather than via radio.tag,
-                 which cannot be given the `peer` class the card styling needs. #}
+              {% comment %} The input is written out by hand rather than via radio.tag,
+                 which cannot be given the `peer` class the card styling needs. {% endcomment %}
               <label for="payment-{{ radio.data.value }}" class="block">
                 <input type="radio" id="payment-{{ radio.data.value }}" name="payment_method"
                        value="{{ radio.data.value }}" class="peer sr-only"

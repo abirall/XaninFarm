@@ -24,9 +24,9 @@
           <span class="mt-1 block text-xs text-charcoal-500">{{ object.phone }}</span>
         </p>
 
-        {# Orders keep their own copy of the address, so removing it here has no
+        {% comment %} Orders keep their own copy of the address, so removing it here has no
            effect on delivery history. Worth saying, because customers assume
-           otherwise. #}
+           otherwise. {% endcomment %}
         <p class="mt-5 rounded-xl bg-cream-100 px-4 py-3 text-xs text-charcoal-600">
           {% translate "Your past orders keep their own copy of this address, so none of your order history changes." %}
           {% if object.is_default %}

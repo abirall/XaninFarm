@@ -16,6 +16,11 @@ STORAGES = {
     "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
 }
 
+# Local dev should boot without Redis. Docker/production settings can still use
+# Redis through base/prod, but a plain runserver should not 500 while rendering
+# global context like site settings or sessions.
+CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
+
 # Serve the Tailwind Play CDN when static/css/app.css has not been built yet.
 TAILWIND_CDN_FALLBACK = env.bool(
     "TAILWIND_CDN_FALLBACK",

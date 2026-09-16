@@ -1,10 +1,10 @@
 {% load i18n farm_extras %}
-{#
+{% comment %}
   Ratings summary, the write-a-review form and the review list.
 
   review_create / review_delete re-render this whole block, so it owns the id
   their hx-target points at.
-#}
+{% endcomment %}
 <div id="reviews-panel" class="htmx-fade grid gap-10 lg:grid-cols-[20rem_1fr]">
 
   {# ------------------------------------------------------------------ #}

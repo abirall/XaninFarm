@@ -4,6 +4,10 @@
 {% block title %}{% translate "Customers" %} - {% translate "Dashboard" %}{% endblock %}
 {% block dash_title %}{% translate "Customers" %}{% endblock %}
 
+{% block dash_subtitle %}
+  <p class="mt-1 text-sm text-charcoal-500">{% translate "Everyone who has registered, with what they have ordered." %}</p>
+{% endblock %}
+
 {% block dash_sidebar %}
   {% include "dashboard/partials/_sidebar.html" with current="customers" %}
 {% endblock %}

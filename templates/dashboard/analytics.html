@@ -4,6 +4,10 @@
 {% block title %}{% translate "Analytics" %} - {% translate "Dashboard" %}{% endblock %}
 {% block dash_title %}{% translate "Sales analytics" %}{% endblock %}
 
+{% block dash_subtitle %}
+  <p class="mt-1 text-sm text-charcoal-500">{% translate "Trade over a chosen window. Cancelled and returned orders are excluded." %}</p>
+{% endblock %}
+
 {% block dash_sidebar %}
   {% include "dashboard/partials/_sidebar.html" with current="analytics" %}
 {% endblock %}
@@ -80,8 +84,8 @@
     <section class="card p-5" aria-labelledby="tc-heading">
       <h2 id="tc-heading" class="font-display text-base font-semibold">{% translate "Revenue by category" %}</h2>
       {% if top_categories %}
-        {# Bars are scaled against the leading category, which is always the
-           first row because the query orders by revenue descending. #}
+        {% comment %} Bars are scaled against the leading category, which is always the
+           first row because the query orders by revenue descending. {% endcomment %}
         {% with leader=top_categories.0.revenue %}
           <ul class="mt-4 space-y-3">
             {% for row in top_categories %}

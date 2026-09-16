@@ -20,17 +20,42 @@ wait_for_postgres() {
     local user="${POSTGRES_USER:-xaninfarm}"
     local attempts="${WAIT_FOR_DB_ATTEMPTS:-60}"
 
+    local db="${POSTGRES_DB:-xaninfarm}"
+
     log "waiting for postgres at ${host}:${port}"
     for ((i = 1; i <= attempts; i++)); do
         if pg_isready --host="$host" --port="$port" --username="$user" --quiet; then
-            log "postgres is ready"
-            return 0
+            break
         fi
         sleep 1
     done
 
-    log "ERROR: postgres did not become ready after ${attempts}s"
-    return 1
+    if ! pg_isready --host="$host" --port="$port" --username="$user" --quiet; then
+        log "ERROR: postgres did not accept connections after ${attempts}s"
+        return 1
+    fi
+
+    # pg_isready only proves the server is listening - it never authenticates.
+    # Without this second check the wait reports success and the failure
+    # surfaces later as a confusing traceback out of `migrate`.
+    # --no-password makes a bad password an immediate failure. Without it psql
+    # would try to prompt, and with no terminal attached that is a hang.
+    if ! PGPASSWORD="${POSTGRES_PASSWORD:-}" psql \
+            --host="$host" --port="$port" --username="$user" \
+            --dbname="$db" --no-password --quiet --no-align --tuples-only \
+            --command='SELECT 1' >/dev/null 2>&1; then
+        log "ERROR: connected to postgres but could not authenticate as '${user}'."
+        log "       POSTGRES_PASSWORD does not match this database."
+        log "       Postgres only reads that variable when the data directory is"
+        log "       first created, so changing it later has no effect on an"
+        log "       existing volume. To reset the database (destroys all data):"
+        log ""
+        log "           docker compose down -v && docker compose up --build"
+        return 1
+    fi
+
+    log "postgres is ready"
+    return 0
 }
 
 # Redis is checked in Python rather than with redis-cli, which is not installed.

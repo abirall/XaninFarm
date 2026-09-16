@@ -1,8 +1,8 @@
 {% load i18n %}
-{#
+{% comment %}
   Fulfilment progress and the visible event history.
   Context: order, events.
-#}
+{% endcomment %}
 {% if order.status == 'cancelled' or order.status == 'returned' %}
   <div class="rounded-2xl border border-red-200 bg-red-50 px-5 py-4">
     <p class="font-display font-semibold text-red-900">

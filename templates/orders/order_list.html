@@ -32,9 +32,9 @@
               {% include "orders/partials/_order_status.html" %}
             </div>
 
-            {# Names come from the frozen line snapshots, never a live product
+            {% comment %} Names come from the frozen line snapshots, never a live product
                lookup: the list view does not prefetch that far, and an order
-               must keep showing what was actually bought. #}
+               must keep showing what was actually bought. {% endcomment %}
             <ul class="mt-5 space-y-1.5 border-t border-cream-300 pt-5 text-sm">
               {% for item in order.items.all|slice:":3" %}
                 <li class="flex items-baseline gap-2 text-charcoal-700">

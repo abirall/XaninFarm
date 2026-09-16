@@ -1,10 +1,10 @@
 {% load i18n %}<!DOCTYPE html>
-{#
+{% comment %}
   Deliberately standalone: no {% templatetag openblock %} extends {% templatetag closeblock %}, no static files, no context
   processors. A 500 can be caused by the very things base.html depends on
   (the database, the settings table), so this page must render with nothing
   but the request.
-#}
+{% endcomment %}
 <html lang="en">
 <head>
   <meta charset="utf-8">

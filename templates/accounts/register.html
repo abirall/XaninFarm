@@ -7,8 +7,8 @@
 {% block auth_subtitle %}{% translate "Fresh milk, honey and properly raised meat, delivered to your door." %}{% endblock %}
 
 {% block auth_body %}
-  {# The action keeps ?next= on the URL so RegisterView.get_success_url can
-     honour it after signing the new customer in. #}
+  {% comment %} The action keeps ?next= on the URL so RegisterView.get_success_url can
+     honour it after signing the new customer in. {% endcomment %}
   <form method="post" class="space-y-5">
     {% csrf_token %}
 
@@ -27,8 +27,8 @@
     <div class="space-y-3 border-t border-cream-300 pt-5">
       {% include "partials/_field.html" with field=form.marketing_opt_in %}
       {% include "partials/_field.html" with field=form.accept_terms %}
-      {# accept_terms renders as a checkbox, so _field.html puts its error
-         below without the aria-describedby wiring the text inputs get. #}
+      {% comment %} accept_terms renders as a checkbox, so _field.html puts its error
+         below without the aria-describedby wiring the text inputs get. {% endcomment %}
     </div>
 
     <button type="submit" class="btn-primary w-full !py-3">{% translate "Create my account" %}</button>

@@ -2,15 +2,23 @@
 # XaninFarm - development stack
 #
 #   docker compose up --build
-#   docker compose run --rm web python manage.py migrate
-#   docker compose run --rm web python manage.py createsuperuser
+#
+# That is the whole setup. Migrations run automatically in the web container
+# before runserver starts, so the stack is usable as soon as it is up. Then,
+# in a second terminal, give yourself a staff login:
+#
+#   docker compose exec web python manage.py createsuperuser
 #
 # Shop        http://localhost:8000
-# Dashboard   http://localhost:8000/dashboard/
-# Mail        http://localhost:8025
+# Dashboard   http://localhost:8000/dashboard/   (needs a staff account)
+# Mail        http://localhost:8025              (every email the app sends)
 #
 # The source tree is bind-mounted, so edits reload without a rebuild. Rebuild
 # only when requirements or package.json change.
+#
+# A .env is optional here - every value below has a working default. The few
+# settings that must not follow .env (migrations, mail) are pinned inline and
+# commented where they appear.
 # =============================================================================
 
 name: ${COMPOSE_PROJECT_NAME:-xaninfarm}
@@ -22,8 +30,9 @@ services:
   # ---------------------------------------------------------------------------
   db:
     image: postgres:16-alpine
-    env_file:
-      - ${COMPOSE_ENV_FILE:-.env}
+    # No env_file: the three values below are all postgres needs, and they are
+    # still substituted from .env. Loading the whole file would hand the
+    # database container the Django secret key and the payment credentials.
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-xaninfarm}
       POSTGRES_USER: ${POSTGRES_USER:-xaninfarm}
@@ -73,8 +82,11 @@ services:
       args:
         REQUIREMENTS: dev
     command: python manage.py runserver 0.0.0.0:8000
+    # required:false because .env is gitignored. Every value below has a working
+    # default, so a fresh clone comes up without one.
     env_file: &env_file
-      - ${COMPOSE_ENV_FILE:-.env}
+      - path: ${COMPOSE_ENV_FILE:-.env}
+        required: false
     environment: &django_env
       DJANGO_SETTINGS_MODULE: ${DJANGO_SETTINGS_MODULE:-config.settings.dev}
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-insecure-dev-key-override-me}
@@ -89,18 +101,23 @@ services:
       REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
       CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis:6379/1}
       CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND:-redis://redis:6379/2}
-      EMAIL_BACKEND: ${EMAIL_BACKEND:-django.core.mail.backends.smtp.EmailBackend}
-      EMAIL_HOST: ${EMAIL_HOST:-mailhog}
-      EMAIL_PORT: ${EMAIL_PORT:-1025}
-      EMAIL_USE_TLS: ${EMAIL_USE_TLS:-False}
+      # Pinned rather than read from .env, which defaults to the console
+      # backend. Sending to Mailhog is what makes the order confirmation and
+      # password reset emails inspectable at http://localhost:8025.
+      EMAIL_BACKEND: django.core.mail.backends.smtp.EmailBackend
+      EMAIL_HOST: mailhog
+      EMAIL_PORT: "1025"
+      EMAIL_USE_TLS: "False"
       SITE_URL: ${SITE_URL:-http://localhost:8000}
       SITE_BASE_URL: ${SITE_BASE_URL:-http://localhost:8000}
       ENABLED_PAYMENT_PROVIDERS: ${ENABLED_PAYMENT_PROVIDERS:-cod,mock}
       PAYMENT_SANDBOX: ${PAYMENT_SANDBOX:-True}
       # Only the web container migrates; the workers must not race it.
-      RUN_MIGRATIONS: ${RUN_MIGRATIONS:-1}
-      WAIT_FOR_DB: ${WAIT_FOR_DB:-1}
-      WAIT_FOR_REDIS: ${WAIT_FOR_REDIS:-1}
+      # Not overridable from .env on purpose: the dev stack is worthless with
+      # an unmigrated database, and .env ships RUN_MIGRATIONS=0 for production.
+      RUN_MIGRATIONS: "1"
+      WAIT_FOR_DB: "1"
+      WAIT_FOR_REDIS: "1"
     volumes:
       # Live reload. Named volumes shadow the bind mount for directories the
       # container writes to, so container-generated files never land in the
@@ -110,6 +127,14 @@ services:
       - media_files:/app/mediafiles
     ports:
       - "${WEB_HOST_PORT:-8000}:8000"
+    # Overrides the image's production timings. worker and beat gate on this,
+    # so the slower defaults would leave them idle for a minute on every start.
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://localhost:8000/healthz/"]
+      interval: 10s
+      timeout: 5s
+      start_period: 20s
+      retries: 5
     depends_on:
       db:
         condition: service_healthy
@@ -138,6 +163,11 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      # Waits for web to pass its healthcheck, which only happens after its
+      # entrypoint has finished migrating. Without this the worker starts
+      # against an empty schema and crash-loops until the tables appear.
+      web:
+        condition: service_healthy
     restart: unless-stopped
 
   beat:
@@ -160,6 +190,9 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      # django_celery_beat's tables are created by web's migrate step.
+      web:
+        condition: service_healthy
     restart: unless-stopped
 
   # ---------------------------------------------------------------------------
@@ -175,6 +208,11 @@ services:
     volumes:
       - .:/app
       - node_modules:/app/node_modules
+    # Tailwind's watcher stops as soon as stdin reaches EOF, which is what
+    # happens in a container without a terminal attached - it exits 0 straight
+    # away and restart:unless-stopped turns that into a loop. The npm script
+    # uses --watch=always for this; stdin_open keeps the pipe open as well.
+    stdin_open: true
     restart: unless-stopped
 
 volumes:

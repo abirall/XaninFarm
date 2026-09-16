@@ -1,9 +1,9 @@
 {% load i18n %}
-{#
+{% comment %}
   Wishlist toggle. Swaps itself out on click, so the label and pressed state
   come from the server rather than from optimistic JavaScript.
   Context: product, is_wishlisted.
-#}
+{% endcomment %}
 <form id="wishlist-button"
       action="{% url 'cart:wishlist_toggle' product.pk %}"
       method="post"

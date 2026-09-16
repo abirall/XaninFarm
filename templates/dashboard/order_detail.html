@@ -32,8 +32,8 @@
           {% include "orders/partials/_order_timeline.html" %}
         </div>
 
-        {# The choices come from next_statuses(), which reads ALLOWED_TRANSITIONS
-           in apps.orders.services. An empty list means the order is closed. #}
+        {% comment %} The choices come from next_statuses(), which reads ALLOWED_TRANSITIONS
+           in apps.orders.services. An empty list means the order is closed. {% endcomment %}
         {% if status_form.fields.status.choices %}
           <form action="{% url 'dashboard:order_status' order.number %}" method="post"
                 class="mt-6 flex flex-wrap items-end gap-3 border-t border-cream-300 pt-5">

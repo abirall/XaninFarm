@@ -1,8 +1,8 @@
 {% load i18n %}
-{#
+{% comment %}
   The shop results. Swapped in on its own by HTMX when a filter changes, so the
   root element keeps the id that hx-target points at.
-#}
+{% endcomment %}
 <div id="product-results">
 
   {% if products %}

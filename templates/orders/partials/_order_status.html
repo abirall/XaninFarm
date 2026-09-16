@@ -1,12 +1,12 @@
 {% load i18n %}
-{#
+{% comment %}
   Order and payment status pills.
 
   Two separate badges on purpose: an order can be out for delivery while the
   money is still pending (cash on delivery), and a prepaid order can be paid
   before it is packed. Never collapse these into one label.
   Context: order.
-#}
+{% endcomment %}
 <span class="flex flex-wrap items-center gap-2">
   <span class="badge
     {% if order.status == 'delivered' %}bg-farm-100 text-farm-800

@@ -18,8 +18,8 @@
 
     <hr class="my-10 border-cream-300">
 
-    {# Authored by staff in the admin, so the HTML is trusted markup, not
-       user-submitted content. #}
+    {% comment %} Authored by staff in the admin, so the HTML is trusted markup, not
+       user-submitted content. {% endcomment %}
     <div class="prose-farm">{{ page.body|safe }}</div>
 
     <p class="mt-14 text-xs text-charcoal-400">

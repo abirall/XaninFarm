@@ -1,16 +1,20 @@
 {% load i18n widget_tweaks %}
-{#
+{% comment %}
   One accessible field. Usage:
     {% include "partials/_field.html" with field=form.email %}
   Optional: hint="..." to override the model help text.
 
   Errors are wired with aria-describedby and aria-invalid rather than colour
   alone, so the failure is announced and not merely seen.
-#}
+{% endcomment %}
 <div class="{% if wrapper_class %}{{ wrapper_class }}{% endif %}">
   {% if field.field.widget.input_type == "checkbox" %}
     <label for="{{ field.id_for_label }}" class="flex cursor-pointer items-start gap-3">
-      {% render_field field class+="mt-0.5 h-4 w-4 rounded" aria-invalid=field.errors|yesno:"true,false" %}
+      {% if field.errors %}
+        {% render_field field class+="mt-0.5 h-4 w-4 rounded" aria-invalid="true" %}
+      {% else %}
+        {% render_field field class+="mt-0.5 h-4 w-4 rounded" aria-invalid="false" %}
+      {% endif %}
       <span class="text-sm text-charcoal-700">
         {{ field.label }}{% if field.field.required %}<span class="text-red-600" aria-hidden="true">*</span>{% endif %}
       </span>
@@ -25,9 +29,13 @@
     </label>
 
     {% if field.errors %}
-      {% render_field field class+="field-invalid" aria-invalid="true" aria-describedby=field.auto_id|add:"_error" %}
+      {% with describedby=field.auto_id|add:"_error" %}
+        {% render_field field class+="field-invalid" aria-invalid="true" aria-describedby=describedby %}
+      {% endwith %}
     {% elif field.help_text or hint %}
-      {% render_field field aria-describedby=field.auto_id|add:"_hint" %}
+      {% with describedby=field.auto_id|add:"_hint" %}
+        {% render_field field aria-describedby=describedby %}
+      {% endwith %}
     {% else %}
       {% render_field field %}
     {% endif %}

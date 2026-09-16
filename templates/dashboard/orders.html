@@ -4,6 +4,10 @@
 {% block title %}{% translate "Orders" %} - {% translate "Dashboard" %}{% endblock %}
 {% block dash_title %}{% translate "Orders" %}{% endblock %}
 
+{% block dash_subtitle %}
+  <p class="mt-1 text-sm text-charcoal-500">{% translate "Every placed order. Use the stage tabs to find what needs doing next." %}</p>
+{% endblock %}
+
 {% block dash_sidebar %}
   {% include "dashboard/partials/_sidebar.html" with current="orders" %}
 {% endblock %}

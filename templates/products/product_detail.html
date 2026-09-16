@@ -35,7 +35,7 @@
     {# Gallery                                                           #}
     {# ================================================================= #}
     <div class="lg:sticky lg:top-24 lg:self-start">
-      <div class="overflow-hidden rounded-3xl bg-cream-100 shadow-card">
+      <div class="overflow-hidden rounded-2xl bg-cream-100 shadow-card ring-1 ring-charcoal-100">
         {% if product.primary_image %}
           <img data-gallery-main
                src="{{ product.primary_image.image.url }}"
@@ -91,7 +91,7 @@
       {% endif %}
 
       {% if product.farm_note %}
-        <p class="mt-5 inline-flex items-center gap-2 rounded-full bg-farm-50 px-4 py-2 text-sm text-farm-800">
+        <p class="mt-5 inline-flex items-center gap-2 rounded-xl bg-farm-50 px-4 py-2 text-sm text-farm-800">
           <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M12 21c-4.97 0-9-4.03-9-9 0-4.97 4.03-9 9-9s9 4.03 9 9M12 21c3.5-3 4.5-7 4.5-9M12 21V8"/>
           </svg>
@@ -102,9 +102,9 @@
       <hr class="my-8 border-cream-300">
 
       {% if selected_variant %}
-        {# --- Pack picker ---
+        {% comment %} --- Pack picker ---
            Each option asks the server for its own price and stock; nothing
-           about what this costs is decided in the browser. #}
+           about what this costs is decided in the browser. {% endcomment %}
         {% if variants|length > 1 %}
           <fieldset class="mb-8">
             <legend class="form-label">{% translate "Choose your pack" %}</legend>
@@ -119,9 +119,9 @@
                          hx-get="{% url 'products:variant_panel' variant.pk %}"
                          hx-target="#variant-panel"
                          hx-swap="outerHTML">
-                  {# Styled on a sibling of the input rather than the label, so
-                     the selected state needs peer-* only and not :has(). #}
-                  <span class="block cursor-pointer rounded-2xl border border-charcoal-200 bg-white px-4 py-3 text-sm transition
+                  {% comment %} Styled on a sibling of the input rather than the label, so
+                     the selected state needs peer-* only and not :has(). {% endcomment %}
+                  <span class="block cursor-pointer rounded-xl border border-charcoal-200 bg-white px-4 py-3 text-sm transition
                                peer-focus-visible:ring-2 peer-focus-visible:ring-farm-600 peer-focus-visible:ring-offset-2
                                peer-checked:border-farm-600 peer-checked:bg-farm-50 peer-checked:ring-1 peer-checked:ring-farm-600
                                peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
@@ -162,7 +162,7 @@
           {% endif %}
         </div>
       {% else %}
-        <p class="rounded-2xl border border-cream-300 bg-cream-100 px-5 py-4 text-sm text-charcoal-600">
+        <p class="rounded-xl border border-cream-300 bg-cream-100 px-5 py-4 text-sm text-charcoal-600">
           {% translate "This product is not available to order at the moment." %}
         </p>
       {% endif %}

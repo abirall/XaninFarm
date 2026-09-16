@@ -25,9 +25,9 @@
         {% include "orders/partials/_order_timeline.html" %}
       </section>
 
-      {# This page is authorised by a forwardable link rather than a login, so
+      {% comment %} This page is authorised by a forwardable link rather than a login, so
          it deliberately shows less than the signed-in order page: no email, no
-         phone number, no street address, and no per-line prices. #}
+         phone number, no street address, and no per-line prices. {% endcomment %}
       <section class="card mt-6 p-6 sm:p-8" aria-labelledby="summary-heading">
         <h2 id="summary-heading" class="font-display text-lg font-semibold">{% translate "This delivery" %}</h2>
 

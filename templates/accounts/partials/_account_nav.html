@@ -1,8 +1,8 @@
 {% load i18n %}
-{#
+{% comment %}
   Sidebar navigation shared by the account pages.
   Pass current="profile|orders|addresses|wishlist|password" to mark the page.
-#}
+{% endcomment %}
 <nav aria-label="{% translate 'Account' %}" class="card p-3">
   <ul class="space-y-1 text-sm">
     <li>
@@ -66,8 +66,8 @@
       </a>
     </li>
 
-    {# A POST, because LogoutView rejects GET: a GET logout can be triggered
-       by any image tag on another site. #}
+    {% comment %} A POST, because LogoutView rejects GET: a GET logout can be triggered
+       by any image tag on another site. {% endcomment %}
     <li class="border-t border-cream-300 pt-2">
       <form action="{% url 'accounts:logout' %}" method="post">
         {% csrf_token %}

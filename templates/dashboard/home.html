@@ -4,6 +4,10 @@
 {% block title %}{% translate "Dashboard" %} - {{ site_name }}{% endblock %}
 {% block dash_title %}{% translate "Overview" %}{% endblock %}
 
+{% block dash_subtitle %}
+  <p class="mt-1 text-sm text-charcoal-500">{% translate "Today at the farm, and the queues waiting on someone." %}</p>
+{% endblock %}
+
 {% block dash_sidebar %}
   {% include "dashboard/partials/_sidebar.html" with current="home" %}
 {% endblock %}
@@ -48,17 +52,17 @@
     </div>
   </div>
 
-  {# --- Fourteen-day trend ---
+  {% comment %} --- Fourteen-day trend ---
      A pure-CSS bar chart. Each bar's height is a percentage of the busiest day,
-     so it needs no chart library and no client-side computation. #}
+     so it needs no chart library and no client-side computation. {% endcomment %}
   {% if series %}
     <section class="card mt-6 p-5" aria-labelledby="trend-heading">
       <h2 id="trend-heading" class="font-display text-base font-semibold">
         {% translate "Last 14 days" %}
       </h2>
 
-      {# peak_revenue is computed in the view and floored at 1, so widthratio
-         never divides by zero on a period with no trade. #}
+      {% comment %} peak_revenue is computed in the view and floored at 1, so widthratio
+         never divides by zero on a period with no trade. {% endcomment %}
       <div class="mt-5 flex h-36 items-end gap-1">
         {% for day in series %}
           <div class="group relative flex h-full flex-1 flex-col justify-end">
@@ -78,6 +82,36 @@
       </div>
     </section>
   {% endif %}
+
+  {% comment %}
+    Fulfilment pipeline. Each stage links through to the orders list already
+    filtered to it, so "4 to pack" is one click from the orders that need
+    packing. Counts reuse the query the page already runs.
+  {% endcomment %}
+  <section class="card mt-6 p-5" aria-labelledby="pipeline-heading">
+    <h2 id="pipeline-heading" class="font-display text-base font-semibold">
+      {% translate "Where orders are" %}
+    </h2>
+
+    <ol class="mt-4 grid gap-2 sm:grid-cols-3 lg:grid-cols-6">
+      {% for stage in pipeline %}
+        <li>
+          <a href="{% url 'dashboard:orders' %}?status={{ stage.value }}"
+             class="block rounded-xl border px-3 py-3 text-center transition
+                    {% if stage.count %}border-farm-200 bg-farm-50 hover:border-farm-400
+                    {% else %}border-cream-300 bg-cream-50 hover:border-cream-400{% endif %}">
+            <span class="block font-display text-2xl font-semibold tabular-nums
+                         {% if stage.count %}text-farm-800{% else %}text-charcoal-300{% endif %}">
+              {{ stage.count }}
+            </span>
+            <span class="mt-0.5 block text-[11px] leading-tight text-charcoal-600">
+              {{ stage.label }}
+            </span>
+          </a>
+        </li>
+      {% endfor %}
+    </ol>
+  </section>
 
   <div class="mt-6 grid gap-6 xl:grid-cols-2">
 

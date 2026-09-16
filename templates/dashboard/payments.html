@@ -4,6 +4,10 @@
 {% block title %}{% translate "Payments" %} - {% translate "Dashboard" %}{% endblock %}
 {% block dash_title %}{% translate "Payments" %}{% endblock %}
 
+{% block dash_subtitle %}
+  <p class="mt-1 text-sm text-charcoal-500">{% translate "Every payment attempt. No card details are ever stored." %}</p>
+{% endblock %}
+
 {% block dash_sidebar %}
   {% include "dashboard/partials/_sidebar.html" with current="payments" %}
 {% endblock %}
@@ -77,9 +81,9 @@
               </td>
               <td class="whitespace-nowrap px-4 py-3 text-right font-semibold tabular-nums">
                 {{ payment.amount|taka }}
-                {# Status-gated: refunded_amount aggregates over the refunds
+                {% comment %} Status-gated: refunded_amount aggregates over the refunds
                    table, so reading it on every row would be 25 extra queries
-                   a page for information almost none of them have. #}
+                   a page for information almost none of them have. {% endcomment %}
                 {% if payment.status == "refunded" or payment.status == "partially_refunded" %}
                   <span class="block text-xs font-normal text-charcoal-500">
                     &minus;{{ payment.refunded_amount|taka }} {% translate "refunded" %}

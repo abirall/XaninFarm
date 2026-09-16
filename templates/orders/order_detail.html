@@ -68,8 +68,8 @@
               <div class="min-w-0 flex-1">
                 <div class="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
                   <div class="min-w-0">
-                    {# The stored snapshot, not the live product name: an order
-                       shows what was bought, whatever the catalogue says now. #}
+                    {% comment %} The stored snapshot, not the live product name: an order
+                       shows what was bought, whatever the catalogue says now. {% endcomment %}
                     <h3 class="font-display text-base font-semibold">{{ item.product_name }}</h3>
                     <p class="mt-0.5 text-xs text-charcoal-500">
                       {{ item.variant_name }}{% if item.sku %} &middot; {{ item.sku }}{% endif %}
@@ -258,8 +258,8 @@
           <h2 id="actions-heading" class="font-display text-lg font-semibold">{% translate "Need something?" %}</h2>
 
           <div class="mt-5 space-y-3">
-            {# An unpaid online order can still be completed. COD collects at
-               the door, so it never shows a pay link. #}
+            {% comment %} An unpaid online order can still be completed. COD collects at
+               the door, so it never shows a pay link. {% endcomment %}
             {% if not order.is_cod and not order.is_paid and not order.is_closed %}
               <a href="{% url 'payments:start' number=order.number %}" class="btn-primary w-full">
                 {% translate "Complete payment" %}

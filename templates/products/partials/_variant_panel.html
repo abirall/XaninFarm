@@ -1,9 +1,9 @@
 {% load i18n farm_extras %}
-{#
+{% comment %}
   Price, availability and the add-to-cart control for one variant.
   Swapped in by HTMX when the shopper picks a different pack, so the price and
   stock a customer sees are always the server's, never the page's.
-#}
+{% endcomment %}
 <div id="variant-panel" class="htmx-fade">
 
   <div class="flex flex-wrap items-baseline gap-3">
@@ -51,8 +51,8 @@
           </svg>
         </button>
         <label for="quantity" class="sr-only">{% translate "Quantity" %}</label>
-        {# `quantity` trims trailing zeros without rounding, so a part-pack
-           never advertises stock we cannot ship. The server clamps again. #}
+        {% comment %} `quantity` trims trailing zeros without rounding, so a part-pack
+           never advertises stock we cannot ship. The server clamps again. {% endcomment %}
         <input type="number" id="quantity" name="quantity" value="1" min="1"
                max="{{ available|quantity }}" step="1" inputmode="numeric"
                class="!w-14 !border-0 !bg-transparent !p-0 !text-center !shadow-none focus:!ring-0">

@@ -1,11 +1,11 @@
 {% load i18n farm_extras %}
-{#
+{% comment %}
   The reviews themselves, paginated.
 
   Rendered standalone by reviews:list when a page link is followed, so the root
   keeps the id that pagination targets. Delete buttons target #reviews-panel
   instead, because review_delete answers with the whole panel.
-#}
+{% endcomment %}
 <div id="review-list">
   {% if reviews %}
     <ul class="divide-y divide-cream-300">
@@ -58,9 +58,9 @@
       {% endfor %}
     </ul>
 
-    {# A dedicated pager rather than partials/_pagination.html: the no-JS link
+    {% comment %} A dedicated pager rather than partials/_pagination.html: the no-JS link
        has to reload the product page (?review_page=), while the HTMX request
-       fetches this fragment on its own (?page=). #}
+       fetches this fragment on its own (?page=). {% endcomment %}
     {% if page_obj.has_other_pages %}
       <nav class="mt-8 flex items-center justify-between border-t border-cream-300 pt-6"
            aria-label="{% translate 'Review pages' %}">

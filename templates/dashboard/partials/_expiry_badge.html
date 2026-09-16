@@ -1,9 +1,9 @@
 {% load i18n %}
-{#
+{% comment %}
   Expiry state for one batch. Context: batch.
   Reads InventoryBatch.expiry_state, so the thresholds stay in the model and
   the template never recomputes "how soon is soon".
-#}
+{% endcomment %}
 {% with state=batch.expiry_state days=batch.days_to_expiry %}
   {% if state == "expired" %}
     <span class="badge shrink-0 bg-red-100 text-red-800">{% translate "Expired" %}</span>

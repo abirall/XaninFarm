@@ -41,7 +41,7 @@ from apps.inventory.services import (
     receive_stock,
 )
 from apps.orders.forms import OrderStatusForm
-from apps.orders.models import Order, OrderStatus
+from apps.orders.models import FULFILMENT_FLOW, Order, OrderStatus
 from apps.orders.services import CheckoutError, transition_order
 from apps.payments.constants import PaymentMethod, PaymentStatus
 from apps.payments.models import Payment
@@ -54,6 +54,25 @@ PAGE_SIZE = 25
 def _paginate(request: HttpRequest, queryset, per_page: int = PAGE_SIZE):
     """Paginate, absorbing junk page numbers rather than 404ing a staff tool."""
     return Paginator(queryset, per_page).get_page(request.GET.get("page"))
+
+
+def _render(request: HttpRequest, template: str, context: dict) -> HttpResponse:
+    """Render a dashboard page with the chrome every page needs.
+
+    The sidebar's badge counts are added here rather than per view, because
+    navigation that changes depending on which page you are standing on reads
+    as a bug. Not a context processor: that would put two extra queries on
+    every storefront request as well, to serve a nav only staff ever see.
+    """
+    return render(
+        request,
+        template,
+        {
+            "open_orders": Order.objects.open().count(),
+            "pending_reviews": Review.objects.pending().count(),
+            **context,
+        },
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -90,24 +109,26 @@ def home(request: HttpRequest) -> HttpResponse:
         # and defaulted to 1 so a week with no trade divides safely.
         "peak_revenue": max((day["revenue"] for day in series), default=0) or 1,
         "status_counts": status_counts,
-        "open_orders": sum(
-            status_counts.get(status, 0)
-            for status in (
-                OrderStatus.PENDING,
-                OrderStatus.CONFIRMED,
-                OrderStatus.PREPARING,
-                OrderStatus.PACKED,
-                OrderStatus.OUT_FOR_DELIVERY,
-            )
-        ),
+        # The fulfilment pipeline, built from the counts already fetched above.
+        # Assembled here rather than in the template so the stage order stays
+        # tied to FULFILMENT_FLOW and cannot drift from the tracking bar.
+        "pipeline": [
+            {
+                "value": status.value,
+                "label": OrderStatus(status).label,
+                "count": status_counts.get(status.value, 0),
+            }
+            for status in FULFILMENT_FLOW
+        ],
+        # open_orders and pending_reviews come from _render, which supplies them
+        # to every dashboard page so the sidebar badges do not come and go.
         "action_needed": action_needed,
         "outstanding_cash": outstanding_cash(),
         "customers": customer_summary(days=30),
         "low_stock": low_stock_variants()[:8],
         "expiring": expiring_batches()[:8],
-        "pending_reviews": Review.objects.pending().count(),
     }
-    return render(request, "dashboard/home.html", context)
+    return _render(request, "dashboard/home.html", context)
 
 
 # ---------------------------------------------------------------------------
@@ -135,7 +156,7 @@ def orders(request: HttpRequest) -> HttpResponse:
             | Q(contact_email__icontains=search)
         )
 
-    return render(
+    return _render(
         request,
         "dashboard/orders.html",
         {
@@ -158,7 +179,7 @@ def order_detail(request: HttpRequest, number: str) -> HttpResponse:
         ).prefetch_related("items", "payments", "events__created_by"),
         number=number,
     )
-    return render(
+    return _render(
         request,
         "dashboard/order_detail.html",
         {
@@ -201,7 +222,7 @@ def order_status(request: HttpRequest, number: str) -> HttpResponse:
 @staff_required
 def inventory(request: HttpRequest) -> HttpResponse:
     """What is running out and what is about to expire."""
-    return render(
+    return _render(
         request,
         "dashboard/inventory.html",
         {
@@ -240,7 +261,7 @@ def batches(request: HttpRequest) -> HttpResponse:
             | Q(variant__product__name__icontains=search)
         )
 
-    return render(
+    return _render(
         request,
         "dashboard/batches.html",
         {
@@ -282,7 +303,7 @@ def batch_receive(request: HttpRequest) -> HttpResponse:
         messages.success(request, f"Booked in {data['quantity']} to batch {batch.batch_number}.")
         return redirect("dashboard:batches")
 
-    return render(request, "dashboard/batch_receive.html", {"form": form})
+    return _render(request, "dashboard/batch_receive.html", {"form": form})
 
 
 @staff_required
@@ -303,7 +324,7 @@ def batch_detail(request: HttpRequest, pk: int) -> HttpResponse:
         messages.success(request, f"Batch {batch.batch_number} corrected.")
         return redirect("dashboard:batch_detail", pk=batch.pk)
 
-    return render(
+    return _render(
         request,
         "dashboard/batch_detail.html",
         {
@@ -339,7 +360,7 @@ def customers(request: HttpRequest) -> HttpResponse:
             | Q(phone__icontains=search)
         )
 
-    return render(
+    return _render(
         request,
         "dashboard/customers.html",
         {
@@ -362,7 +383,7 @@ def payments(request: HttpRequest) -> HttpResponse:
     if provider:
         queryset = queryset.filter(provider=provider)
 
-    return render(
+    return _render(
         request,
         "dashboard/payments.html",
         {
@@ -384,7 +405,7 @@ def reviews(request: HttpRequest) -> HttpResponse:
     if status in ReviewStatus.values:
         queryset = queryset.filter(status=status)
 
-    return render(
+    return _render(
         request,
         "dashboard/reviews.html",
         {
@@ -446,7 +467,7 @@ def analytics(request: HttpRequest) -> HttpResponse:
         for row in payment_method_split(days=days)
     ]
 
-    return render(
+    return _render(
         request,
         "dashboard/analytics.html",
         {

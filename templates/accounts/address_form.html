@@ -1,8 +1,8 @@
 {% extends "base.html" %}
 {% load i18n %}
 
-{# Shared by AddressCreateView and AddressUpdateView: `object` is only set on
-   the edit path, which is what distinguishes the two. #}
+{% comment %} Shared by AddressCreateView and AddressUpdateView: `object` is only set on
+   the edit path, which is what distinguishes the two. {% endcomment %}
 {% block title %}
   {% if object %}{% translate "Edit address" %}{% else %}{% translate "Add an address" %}{% endif %} - {{ site_name }}
 {% endblock %}
@@ -54,12 +54,12 @@
         {% include "partials/_field.html" with field=form.address_line %}
         {% include "partials/_field.html" with field=form.delivery_note %}
 
-        {# The area and district decide the delivery zone, which decides the
+        {% comment %} The area and district decide the delivery zone, which decides the
            fee and the minimum order. The form resolves it on save; nothing is
-           asked of the customer. #}
+           asked of the customer. {% endcomment %}
         <div class="border-t border-cream-300 pt-6">
-          {# _field.html renders this field's help text itself, including the
-             "already your default" note the form sets when it disables it. #}
+          {% comment %} _field.html renders this field's help text itself, including the
+             "already your default" note the form sets when it disables it. {% endcomment %}
           {% include "partials/_field.html" with field=form.set_as_default %}
         </div>
 

@@ -4,6 +4,10 @@
 {% block title %}{% translate "Reviews" %} - {% translate "Dashboard" %}{% endblock %}
 {% block dash_title %}{% translate "Review moderation" %}{% endblock %}
 
+{% block dash_subtitle %}
+  <p class="mt-1 text-sm text-charcoal-500">{% translate "Reviews wait here until someone approves or rejects them." %}</p>
+{% endblock %}
+
 {% block dash_sidebar %}
   {% include "dashboard/partials/_sidebar.html" with current="reviews" %}
 {% endblock %}
@@ -64,9 +68,9 @@
             </div>
           {% endif %}
 
-          {# One form, three submit buttons. The reply text is optional and is
+          {% comment %} One form, three submit buttons. The reply text is optional and is
              saved whichever button is used, so a moderator can approve and
-             answer in a single action. #}
+             answer in a single action. {% endcomment %}
           <form action="{% url 'dashboard:review_moderate' review.pk %}" method="post"
                 class="mt-4 border-t border-cream-300 pt-4">
             {% csrf_token %}

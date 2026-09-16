@@ -4,6 +4,10 @@
 {% block title %}{% translate "Inventory" %} - {% translate "Dashboard" %}{% endblock %}
 {% block dash_title %}{% translate "Inventory" %}{% endblock %}
 
+{% block dash_subtitle %}
+  <p class="mt-1 text-sm text-charcoal-500">{% translate "What is running low and what expires soon. Expired stock is never sold." %}</p>
+{% endblock %}
+
 {% block dash_sidebar %}
   {% include "dashboard/partials/_sidebar.html" with current="inventory" %}
 {% endblock %}
@@ -15,8 +19,8 @@
 {% block dash_content %}
 
   {% if expired_count %}
-    {# Expired stock with quantity still on the books is never sold - the FEFO
-       query filters it out - but it needs writing off, so it is flagged loudly. #}
+    {% comment %} Expired stock with quantity still on the books is never sold - the FEFO
+       query filters it out - but it needs writing off, so it is flagged loudly. {% endcomment %}
     <div class="rounded-2xl border border-red-200 bg-red-50 px-5 py-4" role="alert">
       <p class="font-semibold text-red-900">
         {% blocktranslate count counter=expired_count %}{{ counter }} expired batch still has stock recorded against it.{% plural %}{{ counter }} expired batches still have stock recorded against them.{% endblocktranslate %}

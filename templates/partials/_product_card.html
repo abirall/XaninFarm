@@ -1,15 +1,15 @@
 {% load i18n farm_extras %}
-{#
+{% comment %}
   Product grid card. Expects `product` from a queryset built with
   Product.objects.storefront() - ideally also .with_price_range() and
   annotate_product_stock(), which supply the price range and `available_stock`.
   Stock comparisons fail closed: without the annotation no badge is shown
   rather than a wrong one.
-#}
+{% endcomment %}
 <article class="card group relative flex flex-col overflow-hidden transition duration-300
-                ease-out-soft hover:-translate-y-1 hover:shadow-card-hover">
+                ease-out-soft hover:-translate-y-0.5 hover:shadow-card-hover">
 
-  <div class="relative aspect-[4/3] overflow-hidden bg-cream-200">
+  <div class="relative aspect-[4/5] overflow-hidden bg-cream-200">
     {% with image=product.primary_image %}
       {% if image %}
         <img src="{{ image.image.url }}" alt="{{ image.alt_text }}" loading="lazy" decoding="async"
@@ -55,9 +55,9 @@
       {{ product.category.name }}
     </p>
 
-    <h3 class="mt-1.5 font-display text-lg font-semibold leading-snug text-charcoal-900">
-      {# Stretched link: the whole card is the hit area, but only the title is
-         announced as the link target. #}
+    <h3 class="mt-1.5 text-base font-semibold leading-snug text-charcoal-900">
+      {% comment %} Stretched link: the whole card is the hit area, but only the title is
+         announced as the link target. {% endcomment %}
       <a href="{{ product.get_absolute_url }}" class="after:absolute after:inset-0 after:content-['']">
         {{ product.name }}
       </a>
@@ -93,9 +93,9 @@
       </div>
 
       {% if product.available_stock > 0 and product.default_variant %}
-        {# Adds the default pack straight from the grid. The server re-reads the
+        {% comment %} Adds the default pack straight from the grid. The server re-reads the
            price and stock - the form carries only the variant id. A plain POST
-           rather than HTMX: there is no cart panel on a listing page to swap. #}
+           rather than HTMX: there is no cart panel on a listing page to swap. {% endcomment %}
         <form action="{% url 'cart:add' %}" method="post" class="relative z-10">
           {% csrf_token %}
           <input type="hidden" name="variant" value="{{ product.default_variant.pk }}">

@@ -1,12 +1,12 @@
 {% load i18n farm_extras %}
-{#
+{% comment %}
   Checkout totals, re-priced by the server whenever the chosen address changes.
 
   The delivery fee, the minimum order and the slots on offer all follow from
   the zone, so this fragment is the only place they are rendered. Nothing here
   is computed in the browser.
   Context: quote, zone, slots.
-#}
+{% endcomment %}
 <div id="checkout-summary" class="htmx-fade card p-6 lg:sticky lg:top-24">
   <h2 class="font-display text-lg font-semibold">{% translate "Your order" %}</h2>
 
@@ -26,9 +26,9 @@
     {% endfor %}
   </ul>
 
-  {# --- Delivery window ---
+  {% comment %} --- Delivery window ---
      Rendered here because which slots exist depends on the zone. The
-     form="checkout-form" attribute submits it with the main form. #}
+     form="checkout-form" attribute submits it with the main form. {% endcomment %}
   {% if slots %}
     <div class="border-b border-cream-300 py-5">
       <label for="delivery_slot" class="form-label">{% translate "Preferred time" %}</label>

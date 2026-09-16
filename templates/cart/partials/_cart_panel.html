@@ -1,12 +1,12 @@
 {% load i18n farm_extras %}
-{#
+{% comment %}
   The cart, as a swappable fragment.
 
   Every mutation re-renders this whole block from a freshly priced quote, so
   the numbers on screen are always the server's. Nothing here is computed in
   the browser.
   Context: cart, quote.
-#}
+{% endcomment %}
 <div id="cart-panel" class="htmx-fade">
 
   {# The authoritative basket count for the header badge (see app.js). #}
@@ -85,8 +85,8 @@
                 {% endfor %}
 
                 <div class="mt-4 flex flex-wrap items-center gap-3">
-                  {# Quantity. The change event from the stepper bubbles to the
-                     form, which is what hx-trigger listens for. #}
+                  {% comment %} Quantity. The change event from the stepper bubbles to the
+                     form, which is what hx-trigger listens for. {% endcomment %}
                   <form action="{% url 'cart:update' item.pk %}" method="post"
                         hx-post="{% url 'cart:update' item.pk %}"
                         hx-target="#cart-panel"

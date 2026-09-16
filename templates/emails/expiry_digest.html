@@ -1,8 +1,8 @@
 {% extends "emails/base.html" %}
 {% load i18n %}
 
-{# The perishable-goods alarm. Anything already past its date is flagged red:
-   that stock is unsellable and needs writing off today, not reordering. #}
+{% comment %} The perishable-goods alarm. Anything already past its date is flagged red:
+   that stock is unsellable and needs writing off today, not reordering. {% endcomment %}
 
 {% block content %}
   <h1 style="margin:0 0 6px;font-size:20px;color:#14532D;">

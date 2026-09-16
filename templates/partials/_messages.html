@@ -1,6 +1,6 @@
 {% load i18n %}
-{# Toast list. Included by base.html and re-rendered by HTMX partials, so it
-   must be safe to render more than once per page. #}
+{% comment %} Toast list. Included by base.html and re-rendered by HTMX partials, so it
+   must be safe to render more than once per page. {% endcomment %}
 {% for message in messages %}
   <div class="pointer-events-auto flex w-full max-w-md animate-fade-up items-start gap-3 rounded-2xl
               border px-4 py-3 text-sm shadow-card-hover

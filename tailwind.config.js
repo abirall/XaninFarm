@@ -78,8 +78,8 @@ module.exports = {
         'display-xl': ['4.75rem', { lineHeight: '1', letterSpacing: '-0.03em' }],
       },
       boxShadow: {
-        card: '0 1px 2px rgba(28,27,24,0.04), 0 8px 24px -12px rgba(28,27,24,0.12)',
-        'card-hover': '0 2px 4px rgba(28,27,24,0.05), 0 18px 40px -16px rgba(28,27,24,0.22)',
+        card: '0 10px 30px -5px rgba(28,27,24,0.05), 0 4px 10px -2px rgba(28,27,24,0.02)',
+        'card-hover': '0 20px 40px -5px rgba(28,27,24,0.08), 0 8px 16px -2px rgba(28,27,24,0.03)',
         inset: 'inset 0 1px 0 rgba(255,255,255,0.6)',
       },
       borderRadius: {

@@ -1,9 +1,9 @@
 {% load i18n farm_extras %}
-{#
+{% comment %}
   Pagination for any ListView with paginate_by. Preserves the current filters
   by rebuilding the query string instead of linking to a bare ?page=N.
   Optional: target="#product-results" to page via HTMX.
-#}
+{% endcomment %}
 {% if page_obj.has_other_pages %}
   <nav class="mt-12 flex items-center justify-center gap-1.5" aria-label="{% translate 'Pagination' %}">
 

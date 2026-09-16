@@ -23,8 +23,8 @@
       <div>
         {% if products %}
           {% if unavailable_count %}
-            {# Saved products that are no longer on sale are filtered out by the
-               view rather than shown as unbuyable cards. #}
+            {% comment %} Saved products that are no longer on sale are filtered out by the
+               view rather than shown as unbuyable cards. {% endcomment %}
             <p class="mb-6 rounded-xl bg-cream-100 px-4 py-3 text-xs text-charcoal-600">
               {% blocktranslate count counter=unavailable_count %}One saved item is no longer on sale and is not shown.{% plural %}{{ counter }} saved items are no longer on sale and are not shown.{% endblocktranslate %}
             </p>
@@ -35,8 +35,8 @@
               <div class="relative">
                 {% include "partials/_product_card.html" %}
 
-                {# Sits above the card's stretched title link so unsaving does
-                   not navigate to the product. #}
+                {% comment %} Sits above the card's stretched title link so unsaving does
+                   not navigate to the product. {% endcomment %}
                 <form action="{% url 'cart:wishlist_toggle' product.pk %}" method="post"
                       class="absolute right-3 top-3 z-20">
                   {% csrf_token %}

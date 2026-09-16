@@ -1,9 +1,9 @@
 {% extends "emails/base.html" %}
 {% load i18n %}
 
-{# Internal copy of a new order. Terse on purpose: the farm team reads this on
+{% comment %} Internal copy of a new order. Terse on purpose: the farm team reads this on
    a phone while packing, so everything needed to pick the order is above the
-   fold and nothing else is here. #}
+   fold and nothing else is here. {% endcomment %}
 
 {% block content %}
   <h1 style="margin:0 0 6px;font-size:20px;color:#14532D;">

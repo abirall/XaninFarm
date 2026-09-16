@@ -79,8 +79,8 @@
           </a>
         </div>
 
-        {# The token link is what the emailed one uses, so a customer who is
-           signed out on another device can still follow the order. #}
+        {% comment %} The token link is what the emailed one uses, so a customer who is
+           signed out on another device can still follow the order. {% endcomment %}
         <p class="mt-6 text-center text-xs text-charcoal-400">
           {% translate "You can also follow it without signing in:" %}
           <a href="{{ order.get_tracking_url }}" class="font-medium text-farm-700 hover:underline">

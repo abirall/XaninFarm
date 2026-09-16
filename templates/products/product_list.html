@@ -17,7 +17,7 @@
 
   {# --- Page head --- #}
   <section class="bg-grain border-b border-cream-300 bg-cream-50">
-    <div class="container-page py-12 sm:py-16">
+    <div class="container-page py-14 sm:py-18">
       <nav aria-label="{% translate 'Breadcrumb' %}" class="text-xs text-charcoal-500">
         <a href="{% url 'core:home' %}" class="hover:text-farm-700">{% translate "Home" %}</a>
         <span class="mx-2 text-charcoal-300">/</span>
@@ -28,13 +28,13 @@
         {% endif %}
       </nav>
 
-      <h1 class="mt-4 font-display text-display-sm font-semibold">
+      <h1 class="mt-4 max-w-3xl font-display text-display-sm font-semibold">
         {% if active_category %}{{ active_category.name }}
         {% elif search_term %}{% blocktranslate %}Results for &ldquo;{{ search_term }}&rdquo;{% endblocktranslate %}
         {% else %}{% translate "The whole farm" %}{% endif %}
       </h1>
 
-      <p class="mt-3 max-w-2xl text-charcoal-600">
+      <p class="section-copy">
         {% if active_category and active_category.description %}
           {{ active_category.description }}
         {% else %}
@@ -63,8 +63,8 @@
       {# Paging always restarts when the filters change. #}
       <input type="hidden" name="page" value="1">
 
-      {# Collapsed on mobile, always open from lg up: the `hidden` attribute is
-         what the toggle flips, and the lg:!block class outranks it. #}
+      {% comment %} Collapsed on mobile, always open from lg up: the `hidden` attribute is
+         what the toggle flips, and the lg:!block class outranks it. {% endcomment %}
       <button type="button"
               class="btn-secondary btn-sm mb-4 w-full lg:hidden"
               data-menu-toggle
@@ -76,7 +76,7 @@
         {% translate "Filter and sort" %}
       </button>
 
-      <div id="shop-filters-panel" hidden class="card p-5 lg:!block">
+      <div id="shop-filters-panel" hidden class="surface bg-white/90 p-5 lg:!block">
         <h2 class="font-display text-lg font-semibold">{% translate "Filter" %}</h2>
 
         {# --- Search --- #}
@@ -201,9 +201,9 @@
 
         <div class="flex items-center gap-2">
           <label for="sort" class="text-sm text-charcoal-500">{% translate "Sort" %}</label>
-          {# form="shop-filters" keeps sorting working without JavaScript; the
+          {% comment %} form="shop-filters" keeps sorting working without JavaScript; the
              htmx attributes are needed because a change event fired outside the
-             form never reaches the form's own hx-trigger. #}
+             form never reaches the form's own hx-trigger. {% endcomment %}
           <select id="sort" name="sort" form="shop-filters"
                   hx-get="{{ request.path }}"
                   hx-target="#product-results"

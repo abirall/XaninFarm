@@ -47,11 +47,11 @@ ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
 # libpq-dev and gcc are needed to build psycopg and Pillow; they stay in this
 # stage and never reach the runtime image.
 RUN apt-get update && apt-get install --no-install-recommends -y \
-        build-essential \
-        libpq-dev \
-        libjpeg-dev \
-        zlib1g-dev \
-        libwebp-dev \
+    build-essential \
+    libpq-dev \
+    libjpeg-dev \
+    zlib1g-dev \
+    libwebp-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /wheels
@@ -78,11 +78,11 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 # postgresql-client supplies pg_isready and pg_dump, used by the entrypoint
 # and the backup documentation.
 RUN apt-get update && apt-get install --no-install-recommends -y \
-        libpq5 \
-        libjpeg62-turbo \
-        libwebp7 \
-        postgresql-client \
-        curl \
+    libpq5 \
+    libjpeg62-turbo \
+    libwebp7 \
+    postgresql-client \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Run as a non-root user. Created before the code is copied so ownership can be
@@ -126,9 +126,9 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
 
 ENTRYPOINT ["entrypoint.sh"]
 CMD ["gunicorn", "config.wsgi:application", \
-     "--bind", "0.0.0.0:8000", \
-     "--workers", "3", \
-     "--threads", "2", \
-     "--timeout", "60", \
-     "--access-logfile", "-", \
-     "--error-logfile", "-"]
+    "--bind", "0.0.0.0:8000", \
+    "--workers", "3", \
+    "--threads", "2", \
+    "--timeout", "60", \
+    "--access-logfile", "-", \
+    "--error-logfile", "-"]

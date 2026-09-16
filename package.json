@@ -4,7 +4,7 @@
   "private": true,
   "description": "Tailwind CSS build pipeline for the XaninFarm storefront",
   "scripts": {
-    "dev": "tailwindcss -i ./assets/css/input.css -o ./static/css/app.css --watch",
+    "dev": "tailwindcss -i ./assets/css/input.css -o ./static/css/app.css --watch=always",
     "build": "tailwindcss -i ./assets/css/input.css -o ./static/css/app.css --minify"
   },
   "devDependencies": {
