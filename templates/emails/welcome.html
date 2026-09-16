@@ -1,0 +1,25 @@
+{% extends "emails/base.html" %}
+{% load i18n %}
+
+{% block content %}
+  <h1 style="margin:0 0 14px;font-size:22px;color:#14532D;">
+    {% blocktranslate with name=user.get_short_name %}Welcome, {{ name }}{% endblocktranslate %}
+  </h1>
+
+  <p style="margin:0 0 16px;">
+    {% blocktranslate %}Your {{ brand_name }} account is ready. From today you can order milk, meat, fish, honey and sweets straight from our farm, and have them at your door the same week.{% endblocktranslate %}
+  </p>
+
+  <p style="margin:0 0 24px;">
+    {% translate "Everything we sell is tracked by batch and expiry date, so what arrives is what we would eat ourselves." %}
+  </p>
+
+  <p style="margin:0 0 8px;">
+    <a href="{{ shop_url }}"
+       style="display:inline-block;background:#15803D;color:#FFFFFF;
+              padding:12px 24px;border-radius:8px;text-decoration:none;
+              font-weight:600;">
+      {% translate "Start shopping" %}
+    </a>
+  </p>
+{% endblock %}

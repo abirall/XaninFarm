@@ -1,0 +1,29 @@
+line-length = 100
+target-version = "py312"
+extend-exclude = ["*/migrations/*", "staticfiles", "node_modules"]
+
+[lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "I",   # isort
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "DJ",  # flake8-django
+    "C4",  # comprehensions
+    "SIM", # simplify
+]
+ignore = [
+    "E501",  # line length is handled by the formatter
+    "B008",  # function calls in defaults are idiomatic in Django
+]
+
+[lint.per-file-ignores]
+"config/settings/*.py" = ["F403", "F405", "E402"]
+"**/tests/*.py" = ["B011"]
+
+[lint.isort]
+known-first-party = ["apps", "config"]
+
+[format]
+quote-style = "double"

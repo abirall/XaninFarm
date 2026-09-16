@@ -1,0 +1,114 @@
+{% load i18n farm_extras %}
+{#
+  Ratings summary, the write-a-review form and the review list.
+
+  review_create / review_delete re-render this whole block, so it owns the id
+  their hx-target points at.
+#}
+<div id="reviews-panel" class="htmx-fade grid gap-10 lg:grid-cols-[20rem_1fr]">
+
+  {# ------------------------------------------------------------------ #}
+  {# Summary                                                            #}
+  {# ------------------------------------------------------------------ #}
+  <div class="lg:sticky lg:top-24 lg:self-start">
+    <div class="card p-6">
+      <p class="font-display text-4xl font-semibold text-charcoal-900">
+        {{ product.rating_average|floatformat:1 }}
+      </p>
+      <div class="mt-2">{% star_rating product.rating_average %}</div>
+      <p class="mt-2 text-sm text-charcoal-500">
+        {% blocktranslate count counter=review_count %}{{ counter }} review{% plural %}{{ counter }} reviews{% endblocktranslate %}
+      </p>
+
+      {% if review_count %}
+        <ul class="mt-6 space-y-2">
+          {% for row in rating_breakdown %}
+            <li class="flex items-center gap-3 text-xs text-charcoal-500">
+              <span class="w-8 shrink-0 tabular-nums">{{ row.rating }} &#9733;</span>
+              <span class="h-1.5 flex-1 overflow-hidden rounded-full bg-cream-200">
+                <span class="block h-full rounded-full bg-honey-400" style="width: {{ row.percent }}%"></span>
+              </span>
+              <span class="w-8 shrink-0 text-right tabular-nums">{{ row.count }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </div>
+  </div>
+
+  {# ------------------------------------------------------------------ #}
+  {# Write a review                                                     #}
+  {# ------------------------------------------------------------------ #}
+  <div>
+    {% if flash %}
+      <p class="mb-6 rounded-2xl border border-farm-200 bg-farm-50 px-5 py-4 text-sm text-farm-800" role="status">
+        {{ flash }}
+      </p>
+    {% endif %}
+
+    {% if user.is_authenticated and can_review and not has_reviewed %}
+      <form action="{% url 'reviews:create' product.slug %}" method="post"
+            hx-post="{% url 'reviews:create' product.slug %}"
+            hx-target="#reviews-panel"
+            hx-swap="outerHTML"
+            class="card mb-10 p-6">
+        {% csrf_token %}
+        <h3 class="font-display text-lg font-semibold">{% translate "Write a review" %}</h3>
+        <p class="mt-1 text-sm text-charcoal-500">
+          {% translate "You bought this, so your words carry weight. Tell other families what it was like." %}
+        </p>
+
+        {% if form.non_field_errors %}
+          <div class="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+            {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+          </div>
+        {% endif %}
+
+        <fieldset class="mt-6">
+          <legend class="form-label">{{ form.rating.label }}</legend>
+          <div class="mt-2 flex flex-wrap gap-x-6 gap-y-2">
+            {% for radio in form.rating %}
+              <label for="{{ radio.id_for_label }}"
+                     class="flex cursor-pointer items-center gap-2 text-sm text-charcoal-700">
+                {{ radio.tag }}
+                {% star_rating radio.data.value %}
+                <span>{{ radio.choice_label }}</span>
+              </label>
+            {% endfor %}
+          </div>
+          {% for error in form.rating.errors %}
+            <p class="form-error">{{ error }}</p>
+          {% endfor %}
+        </fieldset>
+
+        <div class="mt-5">
+          {% include "partials/_field.html" with field=form.title %}
+        </div>
+        <div class="mt-5">
+          {% include "partials/_field.html" with field=form.body %}
+        </div>
+
+        <button type="submit" class="btn-primary mt-6">{% translate "Post review" %}</button>
+      </form>
+
+    {% elif user.is_authenticated and has_reviewed %}
+      <p class="mb-10 rounded-2xl border border-cream-300 bg-cream-100 px-5 py-4 text-sm text-charcoal-600">
+        {% translate "Thanks - you have already reviewed this product." %}
+      </p>
+
+    {% elif user.is_authenticated %}
+      <p class="mb-10 rounded-2xl border border-cream-300 bg-cream-100 px-5 py-4 text-sm text-charcoal-600">
+        {% translate "Only customers who have received this product can review it. That is how we keep every star honest." %}
+      </p>
+
+    {% else %}
+      <p class="mb-10 rounded-2xl border border-cream-300 bg-cream-100 px-5 py-4 text-sm text-charcoal-600">
+        <a href="{% url 'accounts:login' %}?next={{ product.get_absolute_url|urlencode }}"
+           class="font-semibold text-farm-700 underline underline-offset-2">{% translate "Sign in" %}</a>
+        {% translate "to review a product you have bought from us." %}
+      </p>
+    {% endif %}
+
+    {% include "reviews/partials/_review_list.html" %}
+  </div>
+</div>

@@ -1,0 +1,102 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load i18n farm_extras %}
+
+{% block title %}{% translate "Orders" %} - {% translate "Dashboard" %}{% endblock %}
+{% block dash_title %}{% translate "Orders" %}{% endblock %}
+
+{% block dash_sidebar %}
+  {% include "dashboard/partials/_sidebar.html" with current="orders" %}
+{% endblock %}
+
+{% block dash_content %}
+
+  {# --- Status tabs --- #}
+  <div class="flex flex-wrap gap-1.5">
+    <a href="{% url 'dashboard:orders' %}"
+       class="badge {% if not active_status %}bg-farm-700 text-cream-50{% else %}bg-cream-200 text-charcoal-700 hover:bg-cream-300{% endif %}">
+      {% translate "All" %}
+    </a>
+    {% for value, label in status_choices %}
+      <a href="?{% query_replace status=value page=None %}"
+         class="badge {% if active_status == value %}bg-farm-700 text-cream-50{% else %}bg-cream-200 text-charcoal-700 hover:bg-cream-300{% endif %}">
+        {{ label }}
+        <span class="ml-1 tabular-nums opacity-70">{{ status_counts|dict_get:value }}</span>
+      </a>
+    {% endfor %}
+  </div>
+
+  {# --- Search + payment filter --- #}
+  <form method="get" class="mt-4 flex flex-wrap items-end gap-3">
+    {% if active_status %}<input type="hidden" name="status" value="{{ active_status }}">{% endif %}
+
+    <div class="min-w-56 flex-1">
+      <label for="q" class="form-label">{% translate "Find an order" %}</label>
+      <input type="search" id="q" name="q" value="{{ search }}"
+             placeholder="{% translate 'Number, name, phone or email' %}" class="!text-sm">
+    </div>
+
+    <div>
+      <label for="payment_status" class="form-label">{% translate "Payment" %}</label>
+      <select id="payment_status" name="payment_status" class="!text-sm">
+        <option value="">{% translate "Any" %}</option>
+        {% for value, label in payment_status_choices %}
+          <option value="{{ value }}" {% if active_payment_status == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <button type="submit" class="btn-secondary btn-sm">{% translate "Filter" %}</button>
+    {% if search or active_payment_status %}
+      <a href="{% url 'dashboard:orders' %}" class="btn-ghost btn-sm">{% translate "Clear" %}</a>
+    {% endif %}
+  </form>
+
+  {# --- Table --- #}
+  {% if page_obj.object_list %}
+    <div class="card mt-5 overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="border-b border-cream-300 text-left text-xs uppercase tracking-wider text-charcoal-500">
+          <tr>
+            <th scope="col" class="px-4 py-3 font-semibold">{% translate "Order" %}</th>
+            <th scope="col" class="px-4 py-3 font-semibold">{% translate "Customer" %}</th>
+            <th scope="col" class="px-4 py-3 font-semibold">{% translate "Placed" %}</th>
+            <th scope="col" class="px-4 py-3 font-semibold">{% translate "Status" %}</th>
+            <th scope="col" class="px-4 py-3 text-right font-semibold">{% translate "Total" %}</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-cream-200">
+          {% for order in page_obj.object_list %}
+            <tr class="hover:bg-cream-50">
+              <td class="px-4 py-3">
+                <a href="{% url 'dashboard:order_detail' order.number %}"
+                   class="font-medium text-charcoal-900 hover:text-farm-700">{{ order.number }}</a>
+                {% if order.delivery_zone %}
+                  <span class="block text-xs text-charcoal-400">{{ order.delivery_zone.name }}</span>
+                {% endif %}
+              </td>
+              <td class="px-4 py-3">
+                <span class="block text-charcoal-800">{{ order.ship_recipient }}</span>
+                <span class="block text-xs text-charcoal-400">{{ order.contact_phone }}</span>
+              </td>
+              <td class="whitespace-nowrap px-4 py-3 text-charcoal-600">
+                {{ order.placed_at|date:"j M Y" }}
+                <span class="block text-xs text-charcoal-400">{{ order.placed_at|date:"g:i a" }}</span>
+              </td>
+              <td class="px-4 py-3">{% include "orders/partials/_order_status.html" %}</td>
+              <td class="whitespace-nowrap px-4 py-3 text-right font-semibold tabular-nums">
+                {{ order.total|taka }}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% include "partials/_pagination.html" with paginator=page_obj.paginator %}
+
+  {% else %}
+    <div class="surface mt-5 px-6 py-16 text-center">
+      <p class="text-sm text-charcoal-500">{% translate "No orders match this filter." %}</p>
+    </div>
+  {% endif %}
+{% endblock %}

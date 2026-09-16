@@ -1,0 +1,40 @@
+{% extends "accounts/base_auth.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Sign in" %} - {{ site_name }}{% endblock %}
+{% block auth_eyebrow %}{% translate "Welcome back" %}{% endblock %}
+{% block auth_title %}{% translate "Sign in" %}{% endblock %}
+{% block auth_subtitle %}{% translate "Your basket, your addresses and your order history are waiting." %}{% endblock %}
+
+{% block auth_body %}
+  <form action="{% url 'accounts:login' %}" method="post" class="space-y-5">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+        {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+      </div>
+    {% endif %}
+
+    {% include "partials/_field.html" with field=form.username hint=_("Use the email address or mobile number on your account.") %}
+    {% include "partials/_field.html" with field=form.password %}
+
+    <div class="flex justify-end">
+      <a href="{% url 'accounts:password_reset' %}" class="text-xs font-medium text-farm-700 hover:underline">
+        {% translate "Forgotten your password?" %}
+      </a>
+    </div>
+
+    {# Carried through so a customer sent here from the basket lands back on it.
+       LoginView validates this against the allowed hosts before redirecting. #}
+    {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+
+    <button type="submit" class="btn-primary w-full !py-3">{% translate "Sign in" %}</button>
+  </form>
+{% endblock %}
+
+{% block auth_footer %}
+  {% translate "New to the farm?" %}
+  <a href="{% url 'accounts:register' %}{% if next %}?next={{ next|urlencode }}{% endif %}"
+     class="font-semibold text-farm-700 hover:underline">{% translate "Create an account" %}</a>
+{% endblock %}

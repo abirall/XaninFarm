@@ -1,0 +1,72 @@
+{% extends "emails/base.html" %}
+{% load i18n %}
+
+{# The perishable-goods alarm. Anything already past its date is flagged red:
+   that stock is unsellable and needs writing off today, not reordering. #}
+
+{% block content %}
+  <h1 style="margin:0 0 6px;font-size:20px;color:#14532D;">
+    {% translate "Batches expiring soon" %}
+  </h1>
+  <p style="margin:0 0 20px;color:#57534E;font-size:13px;">
+    {% blocktranslate count counter=batches|length %}
+      {{ counter }} batch expires within the next {{ days }} day(s).
+    {% plural %}
+      {{ counter }} batches expire within the next {{ days }} day(s).
+    {% endblocktranslate %}
+  </p>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+         style="border-collapse:collapse;font-size:14px;">
+    <thead>
+      <tr>
+        <th align="left" style="padding:8px 0;border-bottom:2px solid #E7E5E4;
+                                color:#78716C;font-size:12px;font-weight:600;
+                                text-transform:uppercase;letter-spacing:.05em;">
+          {% translate "Batch" %}
+        </th>
+        <th align="right" style="padding:8px 0;border-bottom:2px solid #E7E5E4;
+                                 color:#78716C;font-size:12px;font-weight:600;
+                                 text-transform:uppercase;letter-spacing:.05em;">
+          {% translate "Expires" %}
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for batch in batches %}
+        <tr>
+          <td style="padding:10px 0;border-bottom:1px solid #F5F5F4;">
+            {{ batch.variant.product.name }}
+            <div style="color:#78716C;font-size:12px;">
+              {{ batch.variant.name }} &middot; {{ batch.batch_number }}
+              {% if batch.storage_location %} &middot; {{ batch.storage_location }}{% endif %}
+            </div>
+          </td>
+          <td align="right" style="padding:10px 0;border-bottom:1px solid #F5F5F4;
+                                   white-space:nowrap;">
+            <strong style="{% if batch.is_expired %}color:#B91C1C;{% else %}color:#B45309;{% endif %}">
+              {{ batch.expiry_date|date:"j M" }}
+            </strong>
+            <div style="color:#78716C;font-size:12px;">
+              {{ batch.quantity_available|floatformat:"-3" }}
+              {{ batch.variant.get_unit_display }} {% translate "left" %}
+            </div>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <p style="margin:24px 0 0;">
+    <a href="{{ dashboard_url }}"
+       style="display:inline-block;background:#15803D;color:#FFFFFF;
+              padding:11px 22px;border-radius:8px;text-decoration:none;
+              font-weight:600;font-size:14px;">
+      {% translate "Open batches" %}
+    </a>
+  </p>
+{% endblock %}
+
+{% block footer_note %}
+  {% translate "Internal notification for the XaninFarm team." %}
+{% endblock %}

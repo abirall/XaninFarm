@@ -1,0 +1,80 @@
+{% load i18n farm_extras %}
+{#
+  Price, availability and the add-to-cart control for one variant.
+  Swapped in by HTMX when the shopper picks a different pack, so the price and
+  stock a customer sees are always the server's, never the page's.
+#}
+<div id="variant-panel" class="htmx-fade">
+
+  <div class="flex flex-wrap items-baseline gap-3">
+    <p class="font-display text-3xl font-semibold text-charcoal-900">{{ variant.price|taka }}</p>
+    {% if variant.is_on_offer %}
+      <p class="text-lg text-charcoal-400 line-through">{{ variant.compare_at_price|taka }}</p>
+      <span class="badge bg-red-600 text-white">
+        {% blocktranslate with percent=variant.discount_percent %}Save {{ percent }}%{% endblocktranslate %}
+      </span>
+    {% endif %}
+  </div>
+  <p class="mt-1 text-sm text-charcoal-500">
+    {{ variant.display_unit }} &middot; {% translate "SKU" %} {{ variant.sku }}
+  </p>
+
+  {# --- Availability --- #}
+  <p class="mt-5 flex items-center gap-2 text-sm font-medium">
+    {% if available <= 0 %}
+      <span class="h-2 w-2 rounded-full bg-red-500" aria-hidden="true"></span>
+      <span class="text-red-700">{% translate "Out of stock" %}</span>
+    {% elif available <= low_stock_threshold %}
+      <span class="h-2 w-2 rounded-full bg-honey-500" aria-hidden="true"></span>
+      <span class="text-honey-800">
+        {% blocktranslate with left=available|quantity %}Only {{ left }} left{% endblocktranslate %}
+      </span>
+    {% else %}
+      <span class="h-2 w-2 rounded-full bg-farm-500" aria-hidden="true"></span>
+      <span class="text-farm-700">{% translate "In stock, packed to order" %}</span>
+    {% endif %}
+  </p>
+
+  {# --- Add to cart --- #}
+  {% if available > 0 %}
+    <form action="{% url 'cart:add' %}" method="post" class="mt-7 flex flex-wrap items-stretch gap-3">
+      {% csrf_token %}
+      <input type="hidden" name="variant" value="{{ variant.pk }}">
+      <input type="hidden" name="next" value="{{ product.get_absolute_url }}">
+
+      <div data-qty class="flex items-center rounded-full border border-charcoal-200 bg-white">
+        <button type="button" data-qty-step="-1"
+                class="grid h-12 w-12 place-items-center rounded-l-full text-charcoal-600 hover:bg-cream-100">
+          <span class="sr-only">{% translate "Decrease quantity" %}</span>
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" d="M5 12h14"/>
+          </svg>
+        </button>
+        <label for="quantity" class="sr-only">{% translate "Quantity" %}</label>
+        {# `quantity` trims trailing zeros without rounding, so a part-pack
+           never advertises stock we cannot ship. The server clamps again. #}
+        <input type="number" id="quantity" name="quantity" value="1" min="1"
+               max="{{ available|quantity }}" step="1" inputmode="numeric"
+               class="!w-14 !border-0 !bg-transparent !p-0 !text-center !shadow-none focus:!ring-0">
+        <button type="button" data-qty-step="1"
+                class="grid h-12 w-12 place-items-center rounded-r-full text-charcoal-600 hover:bg-cream-100">
+          <span class="sr-only">{% translate "Increase quantity" %}</span>
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" d="M12 5v14M5 12h14"/>
+          </svg>
+        </button>
+      </div>
+
+      <button type="submit" class="btn-primary flex-1 !py-3.5">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.4a.75.75 0 0 1 .73.58L5 7m0 0 1.6 7.6a1.5 1.5 0 0 0 1.47 1.15h8.6a1.5 1.5 0 0 0 1.47-1.2L20 7.5H5Zm4 13.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm9 0a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z"/>
+        </svg>
+        {% translate "Add to cart" %}
+      </button>
+    </form>
+  {% else %}
+    <p class="mt-7 rounded-2xl border border-cream-300 bg-cream-100 px-5 py-4 text-sm text-charcoal-600">
+      {% translate "This pack has sold out. Try another size, or check back tomorrow - we restock daily from the farm." %}
+    </p>
+  {% endif %}
+</div>

@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+{% load static i18n farm_extras %}
+
+{% block title %}{{ product.seo_title|default:product.name }} - {{ site_name }}{% endblock %}
+{% block meta_description %}{{ product.seo_description|default:product.short_description }}{% endblock %}
+{% block og_title %}{{ product.name }}{% endblock %}
+{% block og_description %}{{ product.short_description }}{% endblock %}
+{% block og_type %}product{% endblock %}
+{% block og_image %}
+  {% if product.primary_image %}
+    <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ product.primary_image.image.url }}">
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+
+  {# --- Breadcrumb --- #}
+  <nav aria-label="{% translate 'Breadcrumb' %}" class="border-b border-cream-300 bg-cream-50">
+    <div class="container-page flex flex-wrap items-center gap-x-2 gap-y-1 py-4 text-xs text-charcoal-500">
+      <a href="{% url 'core:home' %}" class="hover:text-farm-700">{% translate "Home" %}</a>
+      {% for crumb in breadcrumbs %}
+        <span class="text-charcoal-300" aria-hidden="true">/</span>
+        {% if crumb.url %}
+          <a href="{{ crumb.url }}" class="hover:text-farm-700">{{ crumb.label }}</a>
+        {% else %}
+          <span class="text-charcoal-700" aria-current="page">{{ crumb.label }}</span>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </nav>
+
+  <div class="container-page grid gap-12 py-10 lg:grid-cols-2 lg:gap-16 lg:py-16">
+
+    {# ================================================================= #}
+    {# Gallery                                                           #}
+    {# ================================================================= #}
+    <div class="lg:sticky lg:top-24 lg:self-start">
+      <div class="overflow-hidden rounded-3xl bg-cream-100 shadow-card">
+        {% if product.primary_image %}
+          <img data-gallery-main
+               src="{{ product.primary_image.image.url }}"
+               alt="{{ product.primary_image.alt_text }}"
+               width="900" height="900"
+               class="aspect-square w-full object-cover">
+        {% else %}
+          <div class="grid aspect-square w-full place-items-center text-farm-300">
+            <svg class="h-20 w-20" fill="none" stroke="currentColor" stroke-width="1.2" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 21c-4.97 0-9-4.03-9-9 0-4.97 4.03-9 9-9s9 4.03 9 9M12 21c3.5-3 4.5-7 4.5-9M12 21V8"/>
+            </svg>
+          </div>
+        {% endif %}
+      </div>
+
+      {% if product.images.all|length > 1 %}
+        <ul class="mt-4 grid grid-cols-5 gap-3">
+          {% for image in product.images.all %}
+            <li>
+              <button type="button"
+                      data-gallery-thumb
+                      data-full="{{ image.image.url }}"
+                      aria-current="{% if forloop.first %}true{% else %}false{% endif %}"
+                      class="block w-full overflow-hidden rounded-xl border-2 border-transparent bg-cream-100 transition aria-[current=true]:border-farm-600 hover:border-farm-300">
+                <img src="{{ image.image.url }}" alt="{{ image.alt_text }}"
+                     width="160" height="160" loading="lazy"
+                     class="aspect-square w-full object-cover">
+              </button>
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </div>
+
+    {# ================================================================= #}
+    {# Buy box                                                           #}
+    {# ================================================================= #}
+    <div>
+      <p class="eyebrow">{{ product.category.name }}</p>
+      <h1 class="mt-3 text-balance font-display text-display-sm font-semibold">{{ product.name }}</h1>
+
+      {% if product.rating_count %}
+        <a href="#reviews" class="mt-4 inline-flex items-center gap-2 text-sm text-charcoal-500 hover:text-farm-700">
+          {% star_rating product.rating_average %}
+          <span>
+            {% blocktranslate count counter=product.rating_count %}{{ counter }} review{% plural %}{{ counter }} reviews{% endblocktranslate %}
+          </span>
+        </a>
+      {% endif %}
+
+      {% if product.short_description %}
+        <p class="mt-5 text-lg leading-relaxed text-charcoal-600">{{ product.short_description }}</p>
+      {% endif %}
+
+      {% if product.farm_note %}
+        <p class="mt-5 inline-flex items-center gap-2 rounded-full bg-farm-50 px-4 py-2 text-sm text-farm-800">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 21c-4.97 0-9-4.03-9-9 0-4.97 4.03-9 9-9s9 4.03 9 9M12 21c3.5-3 4.5-7 4.5-9M12 21V8"/>
+          </svg>
+          {{ product.farm_note }}
+        </p>
+      {% endif %}
+
+      <hr class="my-8 border-cream-300">
+
+      {% if selected_variant %}
+        {# --- Pack picker ---
+           Each option asks the server for its own price and stock; nothing
+           about what this costs is decided in the browser. #}
+        {% if variants|length > 1 %}
+          <fieldset class="mb-8">
+            <legend class="form-label">{% translate "Choose your pack" %}</legend>
+            <div class="mt-3 flex flex-wrap gap-3">
+              {% for variant in variants %}
+              {% with stock=stock_map|dict_get:variant.pk %}
+                <label for="variant-{{ variant.pk }}" class="relative">
+                  <input type="radio" id="variant-{{ variant.pk }}" name="pack"
+                         value="{{ variant.pk }}" class="peer sr-only"
+                         {% if variant.pk == selected_variant.pk %}checked{% endif %}
+                         {% if not stock or stock <= 0 %}disabled{% endif %}
+                         hx-get="{% url 'products:variant_panel' variant.pk %}"
+                         hx-target="#variant-panel"
+                         hx-swap="outerHTML">
+                  {# Styled on a sibling of the input rather than the label, so
+                     the selected state needs peer-* only and not :has(). #}
+                  <span class="block cursor-pointer rounded-2xl border border-charcoal-200 bg-white px-4 py-3 text-sm transition
+                               peer-focus-visible:ring-2 peer-focus-visible:ring-farm-600 peer-focus-visible:ring-offset-2
+                               peer-checked:border-farm-600 peer-checked:bg-farm-50 peer-checked:ring-1 peer-checked:ring-farm-600
+                               peer-disabled:cursor-not-allowed peer-disabled:opacity-50">
+                    <span class="block font-medium text-charcoal-900">{{ variant.name }}</span>
+                    <span class="mt-0.5 block text-xs text-charcoal-500">
+                      {% if not stock or stock <= 0 %}
+                        {% translate "Sold out" %}
+                      {% else %}
+                        {{ variant.price|taka_short }}
+                      {% endif %}
+                    </span>
+                  </span>
+                </label>
+              {% endwith %}
+              {% endfor %}
+            </div>
+            <noscript>
+              <p class="form-hint">
+                {% translate "Pack prices are listed above. Choosing a different pack needs JavaScript - or open it from the shop listing." %}
+              </p>
+            </noscript>
+          </fieldset>
+        {% endif %}
+
+        {% include "products/partials/_variant_panel.html" with variant=selected_variant available=stock_map|dict_get:selected_variant.pk %}
+
+        <div class="mt-4">
+          {% if user.is_authenticated %}
+            {% include "cart/partials/_wishlist_button.html" %}
+          {% else %}
+            <a href="{% url 'accounts:login' %}?next={{ product.get_absolute_url|urlencode }}"
+               class="btn-ghost w-full !justify-center">
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M11.65 20.66 4.6 13.9a5.1 5.1 0 0 1 7.4-7.02 5.1 5.1 0 0 1 7.4 7.02l-7.05 6.76a.5.5 0 0 1-.7 0Z"/>
+              </svg>
+              {% translate "Save to wishlist" %}
+            </a>
+          {% endif %}
+        </div>
+      {% else %}
+        <p class="rounded-2xl border border-cream-300 bg-cream-100 px-5 py-4 text-sm text-charcoal-600">
+          {% translate "This product is not available to order at the moment." %}
+        </p>
+      {% endif %}
+
+      {# --- Reassurance --- #}
+      <ul class="mt-8 grid gap-3 border-t border-cream-300 pt-8 text-sm text-charcoal-600 sm:grid-cols-2">
+        <li class="flex items-center gap-2.5">
+          <svg class="h-4 w-4 shrink-0 text-farm-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
+          </svg>
+          {% translate "Packed the day it ships" %}
+        </li>
+        <li class="flex items-center gap-2.5">
+          <svg class="h-4 w-4 shrink-0 text-farm-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
+          </svg>
+          {% translate "Cash on delivery available" %}
+        </li>
+        <li class="flex items-center gap-2.5">
+          <svg class="h-4 w-4 shrink-0 text-farm-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
+          </svg>
+          {% translate "Chilled transport" %}
+        </li>
+        <li class="flex items-center gap-2.5">
+          <svg class="h-4 w-4 shrink-0 text-farm-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
+          </svg>
+          {% translate "Not right? Tell us that day" %}
+        </li>
+      </ul>
+
+      {# --- Details --- #}
+      {% if product.highlight_list or product.description or product.storage_instructions %}
+        <div class="mt-10 space-y-4">
+          {% if product.highlight_list %}
+            <details open class="card px-5 py-4">
+              <summary class="cursor-pointer font-display font-semibold">{% translate "Why it is good" %}</summary>
+              <ul class="mt-4 space-y-2 text-sm text-charcoal-600">
+                {% for point in product.highlight_list %}
+                  <li class="flex items-start gap-2.5">
+                    <span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-farm-500" aria-hidden="true"></span>
+                    {{ point }}
+                  </li>
+                {% endfor %}
+              </ul>
+            </details>
+          {% endif %}
+
+          {% if product.description %}
+            <details class="card px-5 py-4">
+              <summary class="cursor-pointer font-display font-semibold">{% translate "Full description" %}</summary>
+              <p class="mt-4 whitespace-pre-line text-sm leading-relaxed text-charcoal-600">{{ product.description }}</p>
+            </details>
+          {% endif %}
+
+          {% if product.storage_instructions or product.is_perishable %}
+            <details class="card px-5 py-4">
+              <summary class="cursor-pointer font-display font-semibold">{% translate "Storage and freshness" %}</summary>
+              <p class="mt-4 text-sm leading-relaxed text-charcoal-600">
+                {% if product.storage_instructions %}{{ product.storage_instructions }}{% endif %}
+                {% if product.is_perishable %}
+                  {% blocktranslate with days=product.default_shelf_life_days %}This is a fresh product - we pick the batch with the longest life left for you, typically around {{ days }} days.{% endblocktranslate %}
+                {% endif %}
+              </p>
+            </details>
+          {% endif %}
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {# ================================================================= #}
+  {# Reviews                                                           #}
+  {# ================================================================= #}
+  <section id="reviews" class="border-t border-cream-300 bg-cream-50 py-16" aria-labelledby="reviews-heading">
+    <div class="container-page">
+      <p class="eyebrow">{% translate "Straight from our customers" %}</p>
+      <h2 id="reviews-heading" class="mt-3 font-display text-display-sm font-semibold">
+        {% translate "Reviews" %}
+      </h2>
+      <div class="mt-10">
+        {% include "reviews/partials/_review_panel.html" %}
+      </div>
+    </div>
+  </section>
+
+  {# ================================================================= #}
+  {# Related                                                           #}
+  {# ================================================================= #}
+  {% if related_products %}
+    <section class="py-16" aria-labelledby="related-heading">
+      <div class="container-page">
+        <h2 id="related-heading" class="font-display text-display-sm font-semibold">
+          {% translate "More from this corner of the farm" %}
+        </h2>
+        <div class="mt-10 grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+          {% for product in related_products %}
+            {% include "partials/_product_card.html" %}
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+  {% endif %}
+{% endblock %}

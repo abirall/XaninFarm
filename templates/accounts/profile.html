@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% load i18n farm_extras %}
+
+{% block title %}{% translate "My account" %} - {{ site_name }}{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
+
+{% block content %}
+  <div class="container-page py-12 sm:py-16">
+
+    <div class="flex items-center gap-4">
+      <span class="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-farm-100 font-display text-lg font-semibold text-farm-800">
+        {{ user.initials }}
+      </span>
+      <div class="min-w-0">
+        <p class="eyebrow">{% translate "Your account" %}</p>
+        <h1 class="mt-1 truncate font-display text-display-sm font-semibold">{{ user.get_short_name }}</h1>
+      </div>
+    </div>
+
+    <div class="mt-10 grid gap-8 lg:grid-cols-[16rem_1fr] lg:items-start">
+      <div class="lg:sticky lg:top-24">
+        {% include "accounts/partials/_account_nav.html" with current="profile" %}
+      </div>
+
+      <div class="space-y-6">
+
+        {# --- At a glance --- #}
+        <div class="grid gap-4 sm:grid-cols-3">
+          <a href="{% url 'orders:list' %}" class="card card-hover p-5">
+            <p class="font-display text-3xl font-semibold tabular-nums">{{ order_count }}</p>
+            <p class="mt-1 text-sm text-charcoal-600">
+              {% blocktranslate count counter=order_count %}order{% plural %}orders{% endblocktranslate %}
+            </p>
+          </a>
+          <a href="{% url 'accounts:address_list' %}" class="card card-hover p-5">
+            <p class="font-display text-3xl font-semibold tabular-nums">{{ address_count }}</p>
+            <p class="mt-1 text-sm text-charcoal-600">
+              {% blocktranslate count counter=address_count %}saved address{% plural %}saved addresses{% endblocktranslate %}
+            </p>
+          </a>
+          <a href="{% url 'accounts:wishlist' %}" class="card card-hover p-5">
+            <p class="font-display text-3xl font-semibold tabular-nums">{{ wishlist_count }}</p>
+            <p class="mt-1 text-sm text-charcoal-600">
+              {% blocktranslate count counter=wishlist_count %}saved item{% plural %}saved items{% endblocktranslate %}
+            </p>
+          </a>
+        </div>
+
+        {# --- Details --- #}
+        <section class="card p-6" aria-labelledby="details-heading">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <h2 id="details-heading" class="font-display text-lg font-semibold">{% translate "Your details" %}</h2>
+            <a href="{% url 'accounts:profile_edit' %}" class="btn-ghost btn-sm">{% translate "Edit" %}</a>
+          </div>
+
+          <dl class="mt-5 grid gap-5 sm:grid-cols-2">
+            <div>
+              <dt class="form-label">{% translate "Name" %}</dt>
+              <dd class="text-sm text-charcoal-800">{{ user.get_full_name }}</dd>
+            </div>
+            <div>
+              <dt class="form-label">{% translate "Email" %}</dt>
+              <dd class="text-sm text-charcoal-800">
+                {{ user.email }}
+                {% if user.email_verified %}
+                  <span class="badge-farm ml-1">{% translate "Verified" %}</span>
+                {% endif %}
+              </dd>
+            </div>
+            <div>
+              <dt class="form-label">{% translate "Mobile" %}</dt>
+              <dd class="text-sm text-charcoal-800">{{ user.phone|default:"—" }}</dd>
+            </div>
+            <div>
+              <dt class="form-label">{% translate "Member since" %}</dt>
+              <dd class="text-sm text-charcoal-800">{{ user.date_joined|date:"F Y" }}</dd>
+            </div>
+          </dl>
+        </section>
+
+        {# --- Default address --- #}
+        <section class="card p-6" aria-labelledby="address-heading">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <h2 id="address-heading" class="font-display text-lg font-semibold">
+              {% translate "Default delivery address" %}
+            </h2>
+            <a href="{% url 'accounts:address_list' %}" class="btn-ghost btn-sm">{% translate "Manage" %}</a>
+          </div>
+
+          {% if default_address %}
+            <p class="mt-4 text-sm leading-relaxed text-charcoal-700">
+              <span class="block font-medium text-charcoal-900">{{ default_address.recipient_name }}</span>
+              {{ default_address.single_line }}
+              <span class="block text-xs text-charcoal-500">{{ default_address.phone }}</span>
+            </p>
+          {% else %}
+            <p class="mt-4 text-sm text-charcoal-500">
+              {% translate "You have not saved an address yet. Adding one makes checkout a single step." %}
+            </p>
+            <a href="{% url 'accounts:address_create' %}" class="btn-secondary btn-sm mt-4">
+              {% translate "Add an address" %}
+            </a>
+          {% endif %}
+        </section>
+
+        {# --- Recent orders --- #}
+        <section class="card p-6" aria-labelledby="recent-heading">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <h2 id="recent-heading" class="font-display text-lg font-semibold">{% translate "Recent orders" %}</h2>
+            {% if recent_orders %}
+              <a href="{% url 'orders:list' %}" class="btn-ghost btn-sm">{% translate "See all" %}</a>
+            {% endif %}
+          </div>
+
+          {% if recent_orders %}
+            <ul class="mt-5 divide-y divide-cream-300">
+              {% for order in recent_orders %}
+                <li class="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-4 first:pt-0 last:pb-0">
+                  <div class="min-w-0">
+                    <p class="font-medium text-charcoal-900">
+                      <a href="{{ order.get_absolute_url }}" class="hover:text-farm-700">{{ order.number }}</a>
+                    </p>
+                    <p class="mt-0.5 text-xs text-charcoal-500">
+                      {{ order.placed_at|date:"j M Y" }} &middot;
+                      {% blocktranslate count counter=order.item_count %}{{ counter }} item{% plural %}{{ counter }} items{% endblocktranslate %}
+                    </p>
+                  </div>
+                  <div class="flex items-center gap-3">
+                    {% include "orders/partials/_order_status.html" %}
+                    <span class="text-sm font-semibold tabular-nums">{{ order.total|taka }}</span>
+                  </div>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}
+            <p class="mt-4 text-sm text-charcoal-500">
+              {% translate "No orders yet. Have a look at what is fresh this week." %}
+            </p>
+            <a href="{% url 'products:list' %}" class="btn-primary btn-sm mt-4">{% translate "Start shopping" %}</a>
+          {% endif %}
+        </section>
+      </div>
+    </div>
+  </div>
+{% endblock %}

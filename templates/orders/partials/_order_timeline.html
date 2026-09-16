@@ -1,0 +1,76 @@
+{% load i18n %}
+{#
+  Fulfilment progress and the visible event history.
+  Context: order, events.
+#}
+{% if order.status == 'cancelled' or order.status == 'returned' %}
+  <div class="rounded-2xl border border-red-200 bg-red-50 px-5 py-4">
+    <p class="font-display font-semibold text-red-900">
+      {% if order.status == 'cancelled' %}
+        {% translate "This order was cancelled" %}
+      {% else %}
+        {% translate "This order was returned" %}
+      {% endif %}
+    </p>
+    {% if order.cancellation_reason %}
+      <p class="mt-1 text-sm text-red-800">{{ order.cancellation_reason }}</p>
+    {% endif %}
+    {% if order.cancelled_at %}
+      <p class="mt-1 text-xs text-red-700">{{ order.cancelled_at|date:"j F Y, g:i a" }}</p>
+    {% endif %}
+  </div>
+
+{% else %}
+  <div>
+    <ol class="flex items-start justify-between gap-1">
+      {% for step in order.fulfilment_steps %}
+        <li class="relative flex flex-1 flex-col items-center text-center">
+          {# The connector sits behind the dot and stops at the first step. #}
+          {% if not forloop.first %}
+            <span class="absolute right-1/2 top-3.5 -z-10 h-0.5 w-full
+                         {% if step.is_done %}bg-farm-500{% else %}bg-cream-300{% endif %}"
+                  aria-hidden="true"></span>
+          {% endif %}
+
+          <span class="grid h-7 w-7 place-items-center rounded-full border-2 bg-white
+                       {% if step.is_done %}border-farm-600 bg-farm-600 text-white
+                       {% else %}border-cream-300 text-charcoal-300{% endif %}">
+            {% if step.is_done %}
+              <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
+              </svg>
+            {% else %}
+              <span class="h-1.5 w-1.5 rounded-full bg-current" aria-hidden="true"></span>
+            {% endif %}
+          </span>
+
+          <span class="mt-2 text-[11px] leading-tight sm:text-xs
+                       {% if step.is_current %}font-semibold text-farm-800
+                       {% elif step.is_done %}text-charcoal-600
+                       {% else %}text-charcoal-400{% endif %}">
+            {{ step.label }}
+            {% if step.is_current %}<span class="sr-only">({% translate "current status" %})</span>{% endif %}
+          </span>
+        </li>
+      {% endfor %}
+    </ol>
+  </div>
+{% endif %}
+
+{% if events %}
+  <ol class="mt-8 space-y-4 border-t border-cream-300 pt-6">
+    {% for event in events %}
+      <li class="flex gap-3">
+        <span class="mt-1.5 h-2 w-2 shrink-0 rounded-full
+                     {% if forloop.last %}bg-farm-600{% else %}bg-cream-300{% endif %}" aria-hidden="true"></span>
+        <div class="min-w-0 flex-1">
+          <p class="text-sm font-medium text-charcoal-800">{{ event.get_status_display }}</p>
+          {% if event.note %}<p class="mt-0.5 text-sm text-charcoal-600">{{ event.note }}</p>{% endif %}
+          <p class="mt-0.5 text-xs text-charcoal-400">
+            <time datetime="{{ event.created_at|date:'c' }}">{{ event.created_at|date:"j F Y, g:i a" }}</time>
+          </p>
+        </div>
+      </li>
+    {% endfor %}
+  </ol>
+{% endif %}

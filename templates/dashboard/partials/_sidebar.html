@@ -1,0 +1,86 @@
+{% load i18n %}
+{#
+  Staff navigation. Pass current="home|orders|inventory|customers|payments|reviews|analytics".
+  Badge counts are only passed on the pages that already compute them, so this
+  never adds a query of its own.
+#}
+<nav aria-label="{% translate 'Dashboard' %}" class="card p-2.5">
+  <ul class="space-y-0.5 text-sm">
+    {% with base="flex items-center justify-between gap-2 rounded-lg px-3 py-2 font-medium transition" %}
+
+      <li>
+        <a href="{% url 'dashboard:home' %}"
+           class="{{ base }} {% if current == 'home' %}bg-farm-50 text-farm-800{% else %}text-charcoal-700 hover:bg-cream-100{% endif %}"
+           {% if current == 'home' %}aria-current="page"{% endif %}>
+          {% translate "Overview" %}
+        </a>
+      </li>
+
+      <li>
+        <a href="{% url 'dashboard:orders' %}"
+           class="{{ base }} {% if current == 'orders' %}bg-farm-50 text-farm-800{% else %}text-charcoal-700 hover:bg-cream-100{% endif %}"
+           {% if current == 'orders' %}aria-current="page"{% endif %}>
+          {% translate "Orders" %}
+          {% if open_orders %}<span class="badge-honey">{{ open_orders }}</span>{% endif %}
+        </a>
+      </li>
+
+      <li>
+        <a href="{% url 'dashboard:inventory' %}"
+           class="{{ base }} {% if current == 'inventory' %}bg-farm-50 text-farm-800{% else %}text-charcoal-700 hover:bg-cream-100{% endif %}"
+           {% if current == 'inventory' %}aria-current="page"{% endif %}>
+          {% translate "Inventory" %}
+        </a>
+      </li>
+
+      <li>
+        <a href="{% url 'dashboard:batches' %}"
+           class="{{ base }} pl-6 {% if current == 'batches' %}bg-farm-50 text-farm-800{% else %}text-charcoal-600 hover:bg-cream-100{% endif %}"
+           {% if current == 'batches' %}aria-current="page"{% endif %}>
+          {% translate "Batches" %}
+        </a>
+      </li>
+
+      <li>
+        <a href="{% url 'dashboard:customers' %}"
+           class="{{ base }} {% if current == 'customers' %}bg-farm-50 text-farm-800{% else %}text-charcoal-700 hover:bg-cream-100{% endif %}"
+           {% if current == 'customers' %}aria-current="page"{% endif %}>
+          {% translate "Customers" %}
+        </a>
+      </li>
+
+      <li>
+        <a href="{% url 'dashboard:payments' %}"
+           class="{{ base }} {% if current == 'payments' %}bg-farm-50 text-farm-800{% else %}text-charcoal-700 hover:bg-cream-100{% endif %}"
+           {% if current == 'payments' %}aria-current="page"{% endif %}>
+          {% translate "Payments" %}
+        </a>
+      </li>
+
+      <li>
+        <a href="{% url 'dashboard:reviews' %}"
+           class="{{ base }} {% if current == 'reviews' %}bg-farm-50 text-farm-800{% else %}text-charcoal-700 hover:bg-cream-100{% endif %}"
+           {% if current == 'reviews' %}aria-current="page"{% endif %}>
+          {% translate "Reviews" %}
+          {% if pending_reviews %}<span class="badge-honey">{{ pending_reviews }}</span>{% endif %}
+        </a>
+      </li>
+
+      <li>
+        <a href="{% url 'dashboard:analytics' %}"
+           class="{{ base }} {% if current == 'analytics' %}bg-farm-50 text-farm-800{% else %}text-charcoal-700 hover:bg-cream-100{% endif %}"
+           {% if current == 'analytics' %}aria-current="page"{% endif %}>
+          {% translate "Analytics" %}
+        </a>
+      </li>
+
+      {# Catalogue, pages, banners and coupons are edited in Django admin - this
+         dashboard is for operations, not content entry. #}
+      <li class="border-t border-cream-300 pt-2">
+        <a href="/django-admin/" class="{{ base }} text-charcoal-500 hover:bg-cream-100">
+          {% translate "Django admin" %}
+        </a>
+      </li>
+    {% endwith %}
+  </ul>
+</nav>

@@ -1,0 +1,258 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load i18n farm_extras %}
+
+{% block title %}{{ order.number }} - {% translate "Dashboard" %}{% endblock %}
+{% block dash_title %}{{ order.number }}{% endblock %}
+
+{% block dash_sidebar %}
+  {% include "dashboard/partials/_sidebar.html" with current="orders" %}
+{% endblock %}
+
+{% block dash_actions %}
+  <a href="{% url 'dashboard:orders' %}" class="text-charcoal-500 hover:text-farm-700">
+    {% translate "Back to orders" %}
+  </a>
+{% endblock %}
+
+{% block dash_content %}
+  <div class="grid gap-6 xl:grid-cols-[1fr_20rem] xl:items-start">
+
+    <div class="space-y-6">
+
+      {# --- Status --- #}
+      <section class="card p-5" aria-labelledby="status-heading">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <h2 id="status-heading" class="font-display text-base font-semibold">
+            {% translate "Fulfilment" %}
+          </h2>
+          {% include "orders/partials/_order_status.html" %}
+        </div>
+
+        <div class="mt-5">
+          {% include "orders/partials/_order_timeline.html" %}
+        </div>
+
+        {# The choices come from next_statuses(), which reads ALLOWED_TRANSITIONS
+           in apps.orders.services. An empty list means the order is closed. #}
+        {% if status_form.fields.status.choices %}
+          <form action="{% url 'dashboard:order_status' order.number %}" method="post"
+                class="mt-6 flex flex-wrap items-end gap-3 border-t border-cream-300 pt-5">
+            {% csrf_token %}
+            <div>
+              <label for="{{ status_form.status.id_for_label }}" class="form-label">
+                {{ status_form.status.label }}
+              </label>
+              {{ status_form.status }}
+            </div>
+            <div class="min-w-56 flex-1">
+              <label for="{{ status_form.note.id_for_label }}" class="form-label">
+                {{ status_form.note.label }}
+              </label>
+              {{ status_form.note }}
+            </div>
+            <button type="submit" class="btn-primary btn-sm">{% translate "Update" %}</button>
+          </form>
+          <p class="form-hint mt-2">
+            {% translate "Dispatching consumes the reserved stock. Marking a cash order delivered records the cash." %}
+          </p>
+        {% else %}
+          <p class="mt-6 border-t border-cream-300 pt-5 text-sm text-charcoal-500">
+            {% translate "This order is closed. No further status changes are possible." %}
+          </p>
+        {% endif %}
+      </section>
+
+      {# --- Items --- #}
+      <section class="card overflow-x-auto" aria-labelledby="items-heading">
+        <h2 id="items-heading" class="px-5 pb-3 pt-5 font-display text-base font-semibold">
+          {% translate "Items" %}
+        </h2>
+        <table class="w-full text-sm">
+          <thead class="border-y border-cream-300 text-left text-xs uppercase tracking-wider text-charcoal-500">
+            <tr>
+              <th scope="col" class="px-5 py-2.5 font-semibold">{% translate "Product" %}</th>
+              <th scope="col" class="px-5 py-2.5 font-semibold">{% translate "SKU" %}</th>
+              <th scope="col" class="px-5 py-2.5 text-right font-semibold">{% translate "Qty" %}</th>
+              <th scope="col" class="px-5 py-2.5 text-right font-semibold">{% translate "Unit" %}</th>
+              <th scope="col" class="px-5 py-2.5 text-right font-semibold">{% translate "Line" %}</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-cream-200">
+            {% for item in order.items.all %}
+              <tr>
+                <td class="px-5 py-3">
+                  <span class="block font-medium text-charcoal-900">{{ item.product_name }}</span>
+                  <span class="block text-xs text-charcoal-500">{{ item.variant_name }}</span>
+                </td>
+                <td class="px-5 py-3 text-xs text-charcoal-500">{{ item.sku|default:"—" }}</td>
+                <td class="px-5 py-3 text-right tabular-nums">{{ item.quantity }}</td>
+                <td class="px-5 py-3 text-right tabular-nums">{{ item.unit_price|taka }}</td>
+                <td class="px-5 py-3 text-right font-semibold tabular-nums">{{ item.line_total|taka }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+
+      {# --- Payments --- #}
+      <section class="card p-5" aria-labelledby="pay-heading">
+        <h2 id="pay-heading" class="font-display text-base font-semibold">{% translate "Payment ledger" %}</h2>
+        {% if payments %}
+          <ul class="mt-4 divide-y divide-cream-300">
+            {% for payment in payments %}
+              <li class="py-3 first:pt-0 last:pb-0">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  <span class="font-medium text-charcoal-800">{{ payment.get_provider_display }}</span>
+                  <span class="flex items-center gap-2">
+                    <span class="badge {% if payment.is_paid %}bg-farm-100 text-farm-800{% elif payment.is_open %}bg-honey-100 text-honey-900{% else %}bg-red-100 text-red-800{% endif %}">
+                      {{ payment.get_status_display }}
+                    </span>
+                    <span class="text-sm font-semibold tabular-nums">{{ payment.amount|taka }}</span>
+                  </span>
+                </div>
+                <p class="mt-1 text-xs text-charcoal-400">
+                  {{ payment.reference }}
+                  {% if payment.provider_reference %} &middot; {{ payment.provider_reference }}{% endif %}
+                  {% if payment.instrument_hint %} &middot; {{ payment.instrument_hint }}{% endif %}
+                  &middot; {{ payment.initiated_at|date:"j M Y, g:i a" }}
+                  {% if payment.recorded_by %} &middot; {% translate "by" %} {{ payment.recorded_by.get_short_name }}{% endif %}
+                </p>
+                {% if payment.failure_reason %}
+                  <p class="mt-1 text-xs text-red-700">{{ payment.failure_reason }}</p>
+                {% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="mt-4 text-sm text-charcoal-500">
+            {% translate "No payment attempts recorded yet." %}
+          </p>
+        {% endif %}
+      </section>
+
+      {# --- Full event log, including staff-only entries --- #}
+      <section class="card p-5" aria-labelledby="log-heading">
+        <h2 id="log-heading" class="font-display text-base font-semibold">{% translate "Activity log" %}</h2>
+        <ul class="mt-4 space-y-3">
+          {% for event in events %}
+            <li class="flex gap-3 text-sm">
+              <span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-cream-400" aria-hidden="true"></span>
+              <div>
+                <p class="text-charcoal-800">
+                  {{ event.get_status_display }}
+                  {% if not event.is_customer_visible %}
+                    <span class="badge-muted ml-1">{% translate "Internal" %}</span>
+                  {% endif %}
+                </p>
+                {% if event.note %}<p class="text-xs text-charcoal-600">{{ event.note }}</p>{% endif %}
+                <p class="text-xs text-charcoal-400">
+                  {{ event.created_at|date:"j M Y, g:i a" }}
+                  {% if event.created_by %} &middot; {{ event.created_by.get_short_name }}{% endif %}
+                </p>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      </section>
+    </div>
+
+    {# --- Side column --- #}
+    <div class="space-y-6">
+      <section class="card p-5" aria-labelledby="money-heading">
+        <h2 id="money-heading" class="font-display text-base font-semibold">{% translate "Money" %}</h2>
+        <dl class="mt-4 space-y-2 text-sm">
+          <div class="flex justify-between">
+            <dt class="text-charcoal-600">{% translate "Subtotal" %}</dt>
+            <dd class="tabular-nums">{{ order.subtotal|taka }}</dd>
+          </div>
+          {% if order.discount_amount %}
+            <div class="flex justify-between text-farm-700">
+              <dt>{% translate "Discount" %} {% if order.coupon_code %}({{ order.coupon_code }}){% endif %}</dt>
+              <dd class="tabular-nums">&minus;{{ order.discount_amount|taka }}</dd>
+            </div>
+          {% endif %}
+          <div class="flex justify-between">
+            <dt class="text-charcoal-600">{% translate "Delivery" %}</dt>
+            <dd class="tabular-nums">{{ order.delivery_fee|taka }}</dd>
+          </div>
+          {% if order.delivery_discount %}
+            <div class="flex justify-between text-farm-700">
+              <dt>{% translate "Delivery discount" %}</dt>
+              <dd class="tabular-nums">&minus;{{ order.delivery_discount|taka }}</dd>
+            </div>
+          {% endif %}
+          <div class="flex justify-between border-t border-cream-300 pt-2 font-semibold">
+            <dt>{% translate "Total" %}</dt>
+            <dd class="tabular-nums">{{ order.total|taka }}</dd>
+          </div>
+          <div class="flex justify-between">
+            <dt class="text-charcoal-600">{% translate "Paid" %}</dt>
+            <dd class="tabular-nums">{{ order.amount_paid|taka }}</dd>
+          </div>
+          {% if order.amount_refunded %}
+            <div class="flex justify-between">
+              <dt class="text-charcoal-600">{% translate "Refunded" %}</dt>
+              <dd class="tabular-nums">{{ order.amount_refunded|taka }}</dd>
+            </div>
+          {% endif %}
+          {% if order.balance_due %}
+            <div class="flex justify-between rounded-lg bg-honey-50 px-2.5 py-1.5 font-semibold text-honey-900">
+              <dt>{% translate "Balance due" %}</dt>
+              <dd class="tabular-nums">{{ order.balance_due|taka }}</dd>
+            </div>
+          {% endif %}
+        </dl>
+        <p class="mt-3 text-xs text-charcoal-500">{{ order.get_payment_method_display }}</p>
+      </section>
+
+      <section class="card p-5" aria-labelledby="ship-heading">
+        <h2 id="ship-heading" class="font-display text-base font-semibold">{% translate "Delivery" %}</h2>
+        <p class="mt-3 text-sm leading-relaxed text-charcoal-700">
+          {% for line in order.shipping_address_lines %}
+            {% if line %}<span class="block">{{ line }}</span>{% endif %}
+          {% endfor %}
+        </p>
+        <dl class="mt-4 space-y-2 text-xs">
+          {% if order.delivery_zone %}
+            <div><dt class="inline text-charcoal-500">{% translate "Zone:" %}</dt>
+                 <dd class="inline text-charcoal-800">{{ order.delivery_zone.name }}</dd></div>
+          {% endif %}
+          {% if order.delivery_slot %}
+            <div><dt class="inline text-charcoal-500">{% translate "Slot:" %}</dt>
+                 <dd class="inline text-charcoal-800">{{ order.delivery_slot.label }}</dd></div>
+          {% endif %}
+          {% if order.requested_delivery_date %}
+            <div><dt class="inline text-charcoal-500">{% translate "Requested:" %}</dt>
+                 <dd class="inline text-charcoal-800">{{ order.requested_delivery_date|date:"j M Y" }}</dd></div>
+          {% endif %}
+          {% if order.delivery_partner %}
+            <div><dt class="inline text-charcoal-500">{% translate "Rider:" %}</dt>
+                 <dd class="inline text-charcoal-800">{{ order.delivery_partner }}</dd></div>
+          {% endif %}
+        </dl>
+
+        {% if order.customer_note %}
+          <div class="mt-4 rounded-lg bg-cream-100 px-3 py-2">
+            <p class="form-label">{% translate "Customer note" %}</p>
+            <p class="text-xs text-charcoal-700">{{ order.customer_note }}</p>
+          </div>
+        {% endif %}
+        {% if order.staff_note %}
+          <div class="mt-2 rounded-lg bg-honey-50 px-3 py-2">
+            <p class="form-label">{% translate "Internal note" %}</p>
+            <p class="text-xs text-charcoal-700">{{ order.staff_note }}</p>
+          </div>
+        {% endif %}
+      </section>
+
+      <section class="card p-5" aria-labelledby="cust-heading">
+        <h2 id="cust-heading" class="font-display text-base font-semibold">{% translate "Customer" %}</h2>
+        <p class="mt-3 text-sm text-charcoal-800">{{ order.user.get_full_name }}</p>
+        <p class="text-xs text-charcoal-500">{{ order.contact_email }}</p>
+        <p class="text-xs text-charcoal-500">{{ order.contact_phone }}</p>
+        <a href="{% url 'dashboard:customers' %}?q={{ order.contact_email|urlencode }}"
+           class="btn-ghost btn-sm mt-4 w-full">{% translate "Customer history" %}</a>
+      </section>
+    </div>
+  </div>
+{% endblock %}

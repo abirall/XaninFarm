@@ -1,0 +1,121 @@
+{% extends "emails/base.html" %}
+{% load i18n %}
+
+{% block content %}
+  <h1 style="margin:0 0 6px;font-size:22px;color:#14532D;">
+    {% translate "Thank you for your order" %}
+  </h1>
+  <p style="margin:0 0 22px;color:#57534E;">
+    {% blocktranslate with number=order.number %}Order {{ number }}{% endblocktranslate %}
+    &middot; {{ order.placed_at|date:"j M Y, g:i a" }}
+  </p>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+         style="border-collapse:collapse;font-size:14px;">
+    <thead>
+      <tr>
+        <th align="left" style="padding:8px 0;border-bottom:2px solid #E7E5E4;
+                                color:#78716C;font-weight:600;font-size:12px;
+                                text-transform:uppercase;letter-spacing:.05em;">
+          {% translate "Item" %}
+        </th>
+        <th align="right" style="padding:8px 0;border-bottom:2px solid #E7E5E4;
+                                 color:#78716C;font-weight:600;font-size:12px;
+                                 text-transform:uppercase;letter-spacing:.05em;">
+          {% translate "Total" %}
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+        <tr>
+          <td style="padding:11px 0;border-bottom:1px solid #F5F5F4;">
+            {{ item.product_name }}
+            <div style="color:#78716C;font-size:12px;">
+              {{ item.variant_name }} &times; {{ item.quantity }}
+            </div>
+          </td>
+          <td align="right" style="padding:11px 0;border-bottom:1px solid #F5F5F4;
+                                   white-space:nowrap;">
+            {{ currency }}{{ item.line_total }}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+         style="margin-top:14px;font-size:14px;">
+    <tr>
+      <td style="padding:3px 0;color:#57534E;">{% translate "Subtotal" %}</td>
+      <td align="right" style="padding:3px 0;">{{ currency }}{{ order.subtotal }}</td>
+    </tr>
+    {% if order.discount_amount %}
+      <tr>
+        <td style="padding:3px 0;color:#15803D;">
+          {% translate "Discount" %}{% if order.coupon_code %} ({{ order.coupon_code }}){% endif %}
+        </td>
+        <td align="right" style="padding:3px 0;color:#15803D;">
+          &minus;{{ currency }}{{ order.discount_amount }}
+        </td>
+      </tr>
+    {% endif %}
+    <tr>
+      <td style="padding:3px 0;color:#57534E;">{% translate "Delivery" %}</td>
+      <td align="right" style="padding:3px 0;">
+        {% if order.delivery_discount %}
+          <span style="color:#15803D;">{% translate "Free" %}</span>
+        {% else %}
+          {{ currency }}{{ order.delivery_fee }}
+        {% endif %}
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:11px 0 0;border-top:2px solid #E7E5E4;
+                 font-weight:700;font-size:16px;">
+        {% translate "Total" %}
+      </td>
+      <td align="right" style="padding:11px 0 0;border-top:2px solid #E7E5E4;
+                               font-weight:700;font-size:16px;color:#14532D;">
+        {{ currency }}{{ order.total }}
+      </td>
+    </tr>
+  </table>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+         style="margin-top:26px;background:#F7F4EC;border-radius:10px;">
+    <tr>
+      <td style="padding:18px 20px;font-size:13px;line-height:1.7;">
+        <strong style="color:#14532D;">{% translate "Delivering to" %}</strong><br>
+        {{ order.ship_recipient }}<br>
+        {% for line in order.shipping_address_lines %}{{ line }}<br>{% endfor %}
+        {{ order.ship_phone }}
+
+        <div style="margin-top:12px;">
+          <strong style="color:#14532D;">{% translate "Payment" %}</strong><br>
+          {{ order.get_payment_method_display }}
+          {% if order.is_cod %}
+            &mdash; {% blocktranslate with amount=order.total %}please keep {{ currency }}{{ amount }} ready{% endblocktranslate %}
+          {% endif %}
+        </div>
+
+        {% if order.requested_delivery_date %}
+          <div style="margin-top:12px;">
+            <strong style="color:#14532D;">{% translate "Expected" %}</strong><br>
+            {{ order.requested_delivery_date|date:"l, j F" }}
+            {% if order.delivery_slot %} &middot; {{ order.delivery_slot }}{% endif %}
+          </div>
+        {% endif %}
+      </td>
+    </tr>
+  </table>
+
+  <p style="margin:26px 0 0;">
+    <a href="{{ track_url }}"
+       style="display:inline-block;background:#15803D;color:#FFFFFF;
+              padding:12px 24px;border-radius:8px;text-decoration:none;
+              font-weight:600;">
+      {% translate "Track this order" %}
+    </a>
+  </p>
+{% endblock %}

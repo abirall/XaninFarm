@@ -1,0 +1,116 @@
+{% load i18n farm_extras %}
+{#
+  Product grid card. Expects `product` from a queryset built with
+  Product.objects.storefront() - ideally also .with_price_range() and
+  annotate_product_stock(), which supply the price range and `available_stock`.
+  Stock comparisons fail closed: without the annotation no badge is shown
+  rather than a wrong one.
+#}
+<article class="card group relative flex flex-col overflow-hidden transition duration-300
+                ease-out-soft hover:-translate-y-1 hover:shadow-card-hover">
+
+  <div class="relative aspect-[4/3] overflow-hidden bg-cream-200">
+    {% with image=product.primary_image %}
+      {% if image %}
+        <img src="{{ image.image.url }}" alt="{{ image.alt_text }}" loading="lazy" decoding="async"
+             class="h-full w-full object-cover transition duration-500 ease-out-soft group-hover:scale-105">
+      {% else %}
+        <div class="grid h-full w-full place-items-center text-cream-500" aria-hidden="true">
+          <svg class="h-12 w-12" fill="none" stroke="currentColor" stroke-width="1.4" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.16-5.16a2.25 2.25 0 0 1 3.18 0l5.16 5.16m-1.5-1.5 1.41-1.41a2.25 2.25 0 0 1 3.18 0l2.16 2.16M3.75 4.5h16.5a1.5 1.5 0 0 1 1.5 1.5v12a1.5 1.5 0 0 1-1.5 1.5H3.75a1.5 1.5 0 0 1-1.5-1.5V6a1.5 1.5 0 0 1 1.5-1.5Z"/>
+          </svg>
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    {# --- Corner flags --- #}
+    <div class="absolute left-3 top-3 flex flex-col items-start gap-1.5">
+      {% with compare=product.best_compare_at_price %}
+        {% if compare %}
+          <span class="badge bg-red-600 text-white">
+            {% blocktranslate with percent=product.price_from|percent_off:compare %}Save {{ percent }}%{% endblocktranslate %}
+          </span>
+        {% endif %}
+      {% endwith %}
+      {% if product.is_featured %}
+        <span class="badge-honey">{% translate "Farm favourite" %}</span>
+      {% endif %}
+    </div>
+
+    {% if product.available_stock <= 0 %}
+      <div class="absolute inset-0 grid place-items-center bg-charcoal-900/45">
+        <span class="rounded-full bg-white/95 px-4 py-2 text-xs font-semibold uppercase tracking-wider text-charcoal-800">
+          {% translate "Sold out" %}
+        </span>
+      </div>
+    {% elif product.available_stock <= low_stock_threshold %}
+      <span class="badge-danger absolute right-3 top-3">
+        {% blocktranslate with count=product.available_stock|quantity %}Only {{ count }} left{% endblocktranslate %}
+      </span>
+    {% endif %}
+  </div>
+
+  <div class="flex flex-1 flex-col p-5">
+    <p class="text-xs font-medium uppercase tracking-[0.12em] text-farm-600">
+      {{ product.category.name }}
+    </p>
+
+    <h3 class="mt-1.5 font-display text-lg font-semibold leading-snug text-charcoal-900">
+      {# Stretched link: the whole card is the hit area, but only the title is
+         announced as the link target. #}
+      <a href="{{ product.get_absolute_url }}" class="after:absolute after:inset-0 after:content-['']">
+        {{ product.name }}
+      </a>
+    </h3>
+
+    {% if product.short_description %}
+      <p class="mt-1.5 line-clamp-2 text-sm text-charcoal-500">{{ product.short_description }}</p>
+    {% endif %}
+
+    {% if product.rating_count %}
+      <div class="mt-2.5 flex items-center gap-1.5 text-xs text-charcoal-500">
+        {% star_rating product.rating_average %}
+        <span>({{ product.rating_count }})</span>
+      </div>
+    {% endif %}
+
+    <div class="mt-auto flex items-end justify-between gap-3 pt-4">
+      <div>
+        <p class="font-display text-xl font-semibold text-charcoal-900">
+          {% if product.has_price_range %}
+            {% blocktranslate with amount=product.price_from|taka_short %}From {{ amount }}{% endblocktranslate %}
+          {% else %}
+            {{ product.price_from|taka }}
+          {% endif %}
+        </p>
+        {% with compare=product.best_compare_at_price %}
+          {% if compare %}
+            <p class="text-sm text-charcoal-400 line-through">{{ compare|taka_short }}</p>
+          {% elif product.default_variant %}
+            <p class="text-xs text-charcoal-400">{% translate "per" %} {{ product.default_variant.display_unit }}</p>
+          {% endif %}
+        {% endwith %}
+      </div>
+
+      {% if product.available_stock > 0 and product.default_variant %}
+        {# Adds the default pack straight from the grid. The server re-reads the
+           price and stock - the form carries only the variant id. A plain POST
+           rather than HTMX: there is no cart panel on a listing page to swap. #}
+        <form action="{% url 'cart:add' %}" method="post" class="relative z-10">
+          {% csrf_token %}
+          <input type="hidden" name="variant" value="{{ product.default_variant.pk }}">
+          <input type="hidden" name="quantity" value="1">
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <button type="submit"
+                  class="btn-primary btn-sm !px-3.5 !py-2.5"
+                  aria-label="{% blocktranslate with name=product.name %}Add {{ name }} to cart{% endblocktranslate %}">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+            </svg>
+            <span class="hidden sm:inline">{% translate "Add" %}</span>
+          </button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+</article>

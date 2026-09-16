@@ -1,0 +1,4 @@
+-r base.txt
+
+# Error tracking (optional - enabled only when SENTRY_DSN is set)
+sentry-sdk==2.20.0

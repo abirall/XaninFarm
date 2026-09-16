@@ -1,0 +1,13 @@
+{% load i18n %}{{ headline }}
+{% blocktranslate with number=order.number %}Order {{ number }}{% endblocktranslate %} - {{ status_label }}
+
+{% for item in items %}- {{ item.product_name }} ({{ item.variant_name }}) x {{ item.quantity }}
+{% endfor %}
+{% translate "Total" %}: {{ currency }}{{ order.total }}
+{% if order.cancellation_reason %}
+{% translate "Reason" %}: {{ order.cancellation_reason }}
+{% endif %}
+{% translate "Track this order:" %} {{ track_url }}
+
+--
+{{ brand_name }}{% if support_phone %} | {{ support_phone }}{% endif %}

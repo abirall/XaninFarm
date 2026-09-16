@@ -1,0 +1,30 @@
+{% load i18n %}
+{#
+  Wishlist toggle. Swaps itself out on click, so the label and pressed state
+  come from the server rather than from optimistic JavaScript.
+  Context: product, is_wishlisted.
+#}
+<form id="wishlist-button"
+      action="{% url 'cart:wishlist_toggle' product.pk %}"
+      method="post"
+      hx-post="{% url 'cart:wishlist_toggle' product.pk %}"
+      hx-target="this"
+      hx-swap="outerHTML">
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ product.get_absolute_url }}">
+  <button type="submit"
+          class="btn-ghost w-full !justify-center"
+          aria-pressed="{% if is_wishlisted %}true{% else %}false{% endif %}">
+    {% if is_wishlisted %}
+      <svg class="h-5 w-5 text-red-600" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M11.65 20.66 4.6 13.9a5.1 5.1 0 0 1 7.4-7.02 5.1 5.1 0 0 1 7.4 7.02l-7.05 6.76a.5.5 0 0 1-.7 0Z"/>
+      </svg>
+      {% translate "Saved to wishlist" %}
+    {% else %}
+      <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M11.65 20.66 4.6 13.9a5.1 5.1 0 0 1 7.4-7.02 5.1 5.1 0 0 1 7.4 7.02l-7.05 6.76a.5.5 0 0 1-.7 0Z"/>
+      </svg>
+      {% translate "Save to wishlist" %}
+    {% endif %}
+  </button>
+</form>

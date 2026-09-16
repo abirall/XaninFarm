@@ -1,0 +1,188 @@
+{% load i18n %}
+
+{% if site and site.announcement_active and site.announcement_text %}
+  <div class="bg-farm-900 px-4 py-2.5 text-center text-xs font-medium text-cream-100 sm:text-sm">
+    {% if site.announcement_url %}
+      <a href="{{ site.announcement_url }}" class="underline decoration-honey-300 underline-offset-4 hover:text-honey-200">
+        {{ site.announcement_text }}
+      </a>
+    {% else %}
+      {{ site.announcement_text }}
+    {% endif %}
+  </div>
+{% endif %}
+
+<header class="sticky top-0 z-40 border-b border-cream-300/70 bg-cream-50/95 backdrop-blur
+               supports-[backdrop-filter]:bg-cream-50/80">
+  <div class="container-page flex h-18 items-center gap-4">
+
+    {# --- Mobile menu toggle --- #}
+    <button type="button"
+            class="-ml-2 rounded-full p-2.5 text-charcoal-700 hover:bg-cream-200 lg:hidden"
+            data-menu-toggle
+            aria-controls="mobile-nav"
+            aria-expanded="false">
+      <span class="sr-only">{% translate "Open menu" %}</span>
+      <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5"/>
+      </svg>
+    </button>
+
+    {# --- Wordmark --- #}
+    <a href="{% url 'core:home' %}" class="flex shrink-0 items-center gap-2.5">
+      <span class="grid h-10 w-10 place-items-center rounded-full bg-farm-700 text-cream-50">
+        <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 2C8.5 5 6 8.4 6 12.2A6 6 0 0 0 11 18.1V22h2v-3.9a6 6 0 0 0 5-5.9C18 8.4 15.5 5 12 2Zm0 3.4c2.1 2.2 4 4.8 4 6.8a4 4 0 0 1-3 3.9V11h-2v5.1a4 4 0 0 1-3-3.9c0-2 1.9-4.6 4-6.8Z"/>
+        </svg>
+      </span>
+      <span class="leading-none">
+        <span class="block font-display text-xl font-semibold tracking-tight text-farm-800">
+          {{ site_name }}
+        </span>
+        <span class="hidden text-[10px] font-medium uppercase tracking-[0.16em] text-charcoal-400 sm:block">
+          {% translate "Farm to home" %}
+        </span>
+      </span>
+    </a>
+
+    {# --- Desktop navigation --- #}
+    <nav class="ml-4 hidden items-center gap-1 lg:flex" aria-label="{% translate 'Main' %}">
+      <a href="{% url 'products:list' %}"
+         class="rounded-full px-3.5 py-2 text-sm font-medium text-charcoal-700 hover:bg-cream-200 hover:text-farm-800">
+        {% translate "Shop all" %}
+      </a>
+      {% for category in nav_categories %}
+        <a href="{{ category.get_absolute_url }}"
+           class="rounded-full px-3.5 py-2 text-sm font-medium text-charcoal-700 hover:bg-cream-200 hover:text-farm-800">
+          {{ category.name }}
+        </a>
+      {% endfor %}
+    </nav>
+
+    {# --- Search --- #}
+    <form action="{% url 'products:list' %}" method="get"
+          role="search"
+          class="ml-auto hidden max-w-xs flex-1 md:block">
+      <label for="site-search" class="sr-only">{% translate "Search the farm shop" %}</label>
+      <div class="relative">
+        <svg class="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-charcoal-400"
+             fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.35-4.35M17 10.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z"/>
+        </svg>
+        <input type="search" id="site-search" name="q" value="{{ request.GET.q|default:'' }}"
+               placeholder="{% translate 'Milk, honey, chicken...' %}"
+               class="!rounded-full !border-cream-300 !bg-white/80 !pl-10 !text-sm">
+      </div>
+    </form>
+
+    {# --- Account & cart --- #}
+    <div class="ml-auto flex items-center gap-1 md:ml-0">
+      <a href="{% url 'products:list' %}"
+         class="rounded-full p-2.5 text-charcoal-700 hover:bg-cream-200 md:hidden">
+        <span class="sr-only">{% translate "Search" %}</span>
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.35-4.35M17 10.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z"/>
+        </svg>
+      </a>
+
+      {% if user.is_authenticated %}
+        <a href="{% url 'accounts:wishlist' %}"
+           class="hidden rounded-full p-2.5 text-charcoal-700 hover:bg-cream-200 sm:block">
+          <span class="sr-only">{% translate "Saved items" %}</span>
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.28-1.9-4.13-4.24-4.13-1.75 0-3.25 1.03-3.93 2.5h-1.66c-.68-1.47-2.18-2.5-3.93-2.5C4.9 4.12 3 5.97 3 8.25c0 6.06 9 12 9 12s9-5.94 9-12Z"/>
+          </svg>
+        </a>
+        <div class="relative hidden sm:block" data-dropdown>
+          <button type="button" data-dropdown-toggle aria-expanded="false"
+                  class="flex items-center gap-2 rounded-full py-1.5 pl-1.5 pr-3 hover:bg-cream-200">
+            <span class="grid h-8 w-8 place-items-center rounded-full bg-farm-100 text-xs font-bold text-farm-800">
+              {{ user.initials }}
+            </span>
+            <span class="max-w-[6rem] truncate text-sm font-medium text-charcoal-700">
+              {{ user.get_short_name }}
+            </span>
+          </button>
+          <div data-dropdown-panel hidden
+               class="absolute right-0 mt-2 w-56 origin-top-right animate-scale-in rounded-2xl border
+                      border-charcoal-100 bg-white p-1.5 shadow-card-hover">
+            <a href="{% url 'accounts:profile' %}" class="block rounded-xl px-3 py-2 text-sm hover:bg-cream-100">{% translate "My account" %}</a>
+            <a href="{% url 'orders:list' %}" class="block rounded-xl px-3 py-2 text-sm hover:bg-cream-100">{% translate "My orders" %}</a>
+            <a href="{% url 'accounts:address_list' %}" class="block rounded-xl px-3 py-2 text-sm hover:bg-cream-100">{% translate "Addresses" %}</a>
+            <a href="{% url 'accounts:wishlist' %}" class="block rounded-xl px-3 py-2 text-sm hover:bg-cream-100">{% translate "Saved items" %}</a>
+            {% if user.is_staff %}
+              <a href="{% url 'dashboard:home' %}" class="block rounded-xl px-3 py-2 text-sm font-medium text-farm-700 hover:bg-cream-100">{% translate "Farm dashboard" %}</a>
+            {% endif %}
+            <div class="my-1.5 border-t border-charcoal-100"></div>
+            <form action="{% url 'accounts:logout' %}" method="post">
+              {% csrf_token %}
+              <button type="submit" class="w-full rounded-xl px-3 py-2 text-left text-sm text-red-700 hover:bg-red-50">
+                {% translate "Sign out" %}
+              </button>
+            </form>
+          </div>
+        </div>
+      {% else %}
+        <a href="{% url 'accounts:login' %}"
+           class="hidden rounded-full px-4 py-2 text-sm font-medium text-charcoal-700 hover:bg-cream-200 sm:block">
+          {% translate "Sign in" %}
+        </a>
+      {% endif %}
+
+      <a href="{% url 'cart:detail' %}"
+         class="relative rounded-full p-2.5 text-charcoal-800 hover:bg-cream-200">
+        <span class="sr-only">{% translate "Cart" %}</span>
+        <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.4a.75.75 0 0 1 .73.58L5 7m0 0 1.6 7.6a1.5 1.5 0 0 0 1.47 1.15h8.6a1.5 1.5 0 0 0 1.47-1.2L20 7.5H5Zm4 13.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm9 0a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z"/>
+        </svg>
+        {# Kept in sync by the cart:changed HTMX event - see static/js/app.js. #}
+        <span data-cart-count
+              class="absolute -right-0.5 -top-0.5 grid h-5 min-w-5 place-items-center rounded-full
+                     bg-honey-400 px-1 text-[11px] font-bold text-charcoal-900
+                     {% if not cart_total_quantity %}hidden{% endif %}">
+          {{ cart_total_quantity }}
+        </span>
+      </a>
+    </div>
+  </div>
+
+  {# --- Mobile navigation drawer --- #}
+  <div id="mobile-nav" hidden class="border-t border-cream-300 bg-cream-50 lg:hidden">
+    <nav class="container-page space-y-1 py-4" aria-label="{% translate 'Main' %}">
+      <form action="{% url 'products:list' %}" method="get" role="search" class="mb-3 md:hidden">
+        <label for="mobile-search" class="sr-only">{% translate "Search" %}</label>
+        <input type="search" id="mobile-search" name="q" value="{{ request.GET.q|default:'' }}"
+               placeholder="{% translate 'Search the farm shop' %}" class="!rounded-full">
+      </form>
+
+      <a href="{% url 'products:list' %}" class="block rounded-xl px-3 py-2.5 font-medium hover:bg-cream-200">
+        {% translate "Shop all" %}
+      </a>
+      {% for category in nav_categories %}
+        <a href="{{ category.get_absolute_url }}" class="block rounded-xl px-3 py-2.5 hover:bg-cream-200">
+          {{ category.name }}
+        </a>
+      {% endfor %}
+
+      <div class="my-2 border-t border-cream-300"></div>
+
+      {% if user.is_authenticated %}
+        <a href="{% url 'accounts:profile' %}" class="block rounded-xl px-3 py-2.5 hover:bg-cream-200">{% translate "My account" %}</a>
+        <a href="{% url 'orders:list' %}" class="block rounded-xl px-3 py-2.5 hover:bg-cream-200">{% translate "My orders" %}</a>
+        <a href="{% url 'accounts:wishlist' %}" class="block rounded-xl px-3 py-2.5 hover:bg-cream-200">{% translate "Saved items" %}</a>
+        {% if user.is_staff %}
+          <a href="{% url 'dashboard:home' %}" class="block rounded-xl px-3 py-2.5 font-medium text-farm-700 hover:bg-cream-200">{% translate "Farm dashboard" %}</a>
+        {% endif %}
+        <form action="{% url 'accounts:logout' %}" method="post">
+          {% csrf_token %}
+          <button type="submit" class="w-full rounded-xl px-3 py-2.5 text-left text-red-700 hover:bg-red-50">
+            {% translate "Sign out" %}
+          </button>
+        </form>
+      {% else %}
+        <a href="{% url 'accounts:login' %}" class="block rounded-xl px-3 py-2.5 font-medium hover:bg-cream-200">{% translate "Sign in" %}</a>
+        <a href="{% url 'accounts:register' %}" class="block rounded-xl px-3 py-2.5 hover:bg-cream-200">{% translate "Create an account" %}</a>
+      {% endif %}
+    </nav>
+  </div>
+</header>

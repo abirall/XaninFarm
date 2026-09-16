@@ -1,0 +1,37 @@
+{% load i18n %}
+{#
+  The shop results. Swapped in on its own by HTMX when a filter changes, so the
+  root element keeps the id that hx-target points at.
+#}
+<div id="product-results">
+
+  {% if products %}
+    <div class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+      {% for product in products %}
+        {% include "partials/_product_card.html" %}
+      {% endfor %}
+    </div>
+
+    {% include "partials/_pagination.html" with target="#product-results" %}
+
+  {% else %}
+    <div class="surface flex flex-col items-center px-8 py-20 text-center">
+      <span class="grid h-14 w-14 place-items-center rounded-full bg-cream-200 text-charcoal-400">
+        <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.35-4.35M17 10.5a6.5 6.5 0 1 1-13 0 6.5 6.5 0 0 1 13 0Z"/>
+        </svg>
+      </span>
+      <h2 class="mt-5 font-display text-xl font-semibold">{% translate "Nothing matches that yet" %}</h2>
+      <p class="mt-2 max-w-md text-sm text-charcoal-500">
+        {% if search_term %}
+          {% blocktranslate %}We could not find anything for &ldquo;{{ search_term }}&rdquo;. Try a shorter word, or clear your filters.{% endblocktranslate %}
+        {% else %}
+          {% translate "No produce matches these filters right now. Seasons change - try widening your search." %}
+        {% endif %}
+      </p>
+      {% if has_active_filters %}
+        <a href="{% url 'products:list' %}" class="btn-secondary btn-sm mt-7">{% translate "Clear all filters" %}</a>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>

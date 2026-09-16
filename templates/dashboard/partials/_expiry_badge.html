@@ -1,0 +1,25 @@
+{% load i18n %}
+{#
+  Expiry state for one batch. Context: batch.
+  Reads InventoryBatch.expiry_state, so the thresholds stay in the model and
+  the template never recomputes "how soon is soon".
+#}
+{% with state=batch.expiry_state days=batch.days_to_expiry %}
+  {% if state == "expired" %}
+    <span class="badge shrink-0 bg-red-100 text-red-800">{% translate "Expired" %}</span>
+  {% elif state == "critical" %}
+    <span class="badge shrink-0 bg-red-100 text-red-800">
+      {% if days == 0 %}{% translate "Expires today" %}{% else %}{% translate "Expires tomorrow" %}{% endif %}
+    </span>
+  {% elif state == "soon" %}
+    <span class="badge-honey shrink-0">
+      {% blocktranslate count counter=days %}{{ counter }} day left{% plural %}{{ counter }} days left{% endblocktranslate %}
+    </span>
+  {% elif state == "fresh" %}
+    <span class="badge-muted shrink-0">
+      {% blocktranslate count counter=days %}{{ counter }} day left{% plural %}{{ counter }} days left{% endblocktranslate %}
+    </span>
+  {% else %}
+    <span class="badge-muted shrink-0">{% translate "No expiry" %}</span>
+  {% endif %}
+{% endwith %}

@@ -1,0 +1,67 @@
+{% load i18n %}<!DOCTYPE html>
+{# Deliberately standalone: this stands in for a third-party hosted page, so
+   it must not look like - or depend on - the XaninFarm storefront. #}
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sandbox gateway &mdash; {{ payment.reference }}</title>
+  <style>
+    :root { color-scheme: light; }
+    body { margin:0; min-height:100vh; display:flex; align-items:center;
+           justify-content:center; background:#0f172a; color:#e2e8f0;
+           font:16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+    .card { width:min(28rem, 92vw); background:#1e293b; border-radius:14px;
+            padding:2rem; box-shadow:0 20px 50px rgba(0,0,0,.45); }
+    .tag { display:inline-block; background:#f59e0b; color:#1c1917;
+           font-size:11px; font-weight:700; letter-spacing:.08em;
+           text-transform:uppercase; padding:3px 9px; border-radius:9999px; }
+    h1 { font-size:1.25rem; margin:1rem 0 .25rem; }
+    dl { display:grid; grid-template-columns:auto 1fr; gap:.4rem 1rem;
+         margin:1.5rem 0; font-size:.9rem; }
+    dt { color:#94a3b8; }
+    dd { margin:0; text-align:right; font-variant-numeric:tabular-nums; }
+    .total dd, .total dt { font-weight:700; color:#f8fafc; }
+    button { width:100%; padding:.8rem; margin-top:.6rem; border:0;
+             border-radius:9px; font-size:.95rem; font-weight:600;
+             cursor:pointer; }
+    .pay { background:#16a34a; color:#fff; }
+    .fail { background:#334155; color:#e2e8f0; }
+    .cancel { background:transparent; color:#94a3b8;
+              text-decoration:underline; }
+    p.note { margin:1.25rem 0 0; font-size:.78rem; color:#64748b; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <span class="tag">{% translate "Sandbox" %}</span>
+    <h1>{% translate "Confirm your payment" %}</h1>
+
+    <dl>
+      <dt>{% translate "Order" %}</dt><dd>{{ order.number }}</dd>
+      <dt>{% translate "Merchant" %}</dt><dd>XaninFarm</dd>
+      <dt>{% translate "Reference" %}</dt><dd>{{ payment.reference }}</dd>
+      <div></div><div></div>
+      <dt class="total">{% translate "Amount" %}</dt>
+      <dd class="total">{{ payment.currency }} {{ payment.amount }}</dd>
+    </dl>
+
+    <form method="post">
+      {% csrf_token %}
+      <button class="pay" name="outcome" value="paid" type="submit">
+        {% translate "Pay now" %}
+      </button>
+      <button class="fail" name="outcome" value="failed" type="submit">
+        {% translate "Simulate a declined payment" %}
+      </button>
+      <button class="cancel" name="outcome" value="cancelled" type="submit">
+        {% translate "Cancel and go back" %}
+      </button>
+    </form>
+
+    <p class="note">
+      {% translate "No real money moves here. This page exists so the checkout, verification and webhook paths are exercised end to end without live gateway credentials." %}
+    </p>
+  </main>
+</body>
+</html>

@@ -1,0 +1,98 @@
+{% load i18n farm_extras %}
+{#
+  The reviews themselves, paginated.
+
+  Rendered standalone by reviews:list when a page link is followed, so the root
+  keeps the id that pagination targets. Delete buttons target #reviews-panel
+  instead, because review_delete answers with the whole panel.
+#}
+<div id="review-list">
+  {% if reviews %}
+    <ul class="divide-y divide-cream-300">
+      {% for review in reviews %}
+        <li class="py-7 first:pt-0">
+          <div class="flex flex-wrap items-center gap-x-3 gap-y-1">
+            {% star_rating review.rating %}
+            {% if review.is_verified_purchase %}
+              <span class="badge-farm">
+                <svg class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
+                </svg>
+                {% translate "Verified purchase" %}
+              </span>
+            {% endif %}
+          </div>
+
+          {% if review.title %}
+            <h3 class="mt-3 font-display text-base font-semibold text-charcoal-900">{{ review.title }}</h3>
+          {% endif %}
+
+          <p class="mt-2 whitespace-pre-line text-sm leading-relaxed text-charcoal-600">{{ review.body }}</p>
+
+          <p class="mt-3 text-xs text-charcoal-400">
+            {{ review.author_name }} &middot; {{ review.created_at|date:"j F Y" }}
+          </p>
+
+          {% if review.staff_reply %}
+            <div class="mt-4 rounded-2xl border border-farm-100 bg-farm-50/60 px-4 py-3">
+              <p class="text-xs font-semibold uppercase tracking-wide text-farm-800">
+                {% blocktranslate with name=site_name %}Reply from {{ name }}{% endblocktranslate %}
+              </p>
+              <p class="mt-1.5 whitespace-pre-line text-sm text-charcoal-600">{{ review.staff_reply }}</p>
+            </div>
+          {% endif %}
+
+          {% if review.user_id == request.user.id %}
+            <form action="{% url 'reviews:delete' review.pk %}" method="post" class="mt-3"
+                  hx-post="{% url 'reviews:delete' review.pk %}"
+                  hx-target="#reviews-panel"
+                  hx-swap="outerHTML"
+                  hx-confirm="{% translate 'Remove your review?' %}">
+              {% csrf_token %}
+              <button type="submit" class="text-xs font-medium text-charcoal-400 underline underline-offset-2 hover:text-red-700">
+                {% translate "Remove my review" %}
+              </button>
+            </form>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+
+    {# A dedicated pager rather than partials/_pagination.html: the no-JS link
+       has to reload the product page (?review_page=), while the HTMX request
+       fetches this fragment on its own (?page=). #}
+    {% if page_obj.has_other_pages %}
+      <nav class="mt-8 flex items-center justify-between border-t border-cream-300 pt-6"
+           aria-label="{% translate 'Review pages' %}">
+        {% if page_obj.has_previous %}
+          <a href="{{ product.get_absolute_url }}?review_page={{ page_obj.previous_page_number }}#reviews"
+             hx-get="{% url 'reviews:list' product.slug %}?page={{ page_obj.previous_page_number }}"
+             hx-target="#review-list" hx-swap="outerHTML" class="btn-ghost btn-sm">
+            {% translate "Newer" %}
+          </a>
+        {% else %}
+          <span></span>
+        {% endif %}
+
+        <span class="text-xs text-charcoal-400">
+          {% blocktranslate with current=page_obj.number total=page_obj.paginator.num_pages %}Page {{ current }} of {{ total }}{% endblocktranslate %}
+        </span>
+
+        {% if page_obj.has_next %}
+          <a href="{{ product.get_absolute_url }}?review_page={{ page_obj.next_page_number }}#reviews"
+             hx-get="{% url 'reviews:list' product.slug %}?page={{ page_obj.next_page_number }}"
+             hx-target="#review-list" hx-swap="outerHTML" class="btn-ghost btn-sm">
+            {% translate "Older" %}
+          </a>
+        {% else %}
+          <span></span>
+        {% endif %}
+      </nav>
+    {% endif %}
+
+  {% else %}
+    <p class="py-10 text-center text-sm text-charcoal-500">
+      {% translate "No reviews yet. If you have tried this, you would be the first to say so." %}
+    </p>
+  {% endif %}
+</div>

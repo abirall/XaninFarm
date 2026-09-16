@@ -1,0 +1,98 @@
+{% extends "emails/base.html" %}
+{% load i18n %}
+
+{# Internal copy of a new order. Terse on purpose: the farm team reads this on
+   a phone while packing, so everything needed to pick the order is above the
+   fold and nothing else is here. #}
+
+{% block content %}
+  <h1 style="margin:0 0 6px;font-size:20px;color:#14532D;">
+    {% blocktranslate with number=order.number %}New order {{ number }}{% endblocktranslate %}
+  </h1>
+  <p style="margin:0 0 20px;color:#57534E;font-size:13px;">
+    {{ order.placed_at|date:"j M Y, g:i a" }}
+    &middot; {{ order.get_payment_method_display }}
+    &middot; <strong style="color:#14532D;">{{ currency }}{{ order.total }}</strong>
+    {% if order.is_cod %}
+      &middot; <span style="color:#B45309;font-weight:600;">{% translate "collect on delivery" %}</span>
+    {% else %}
+      &middot; {{ order.get_payment_status_display }}
+    {% endif %}
+  </p>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+         style="border-collapse:collapse;font-size:14px;">
+    <thead>
+      <tr>
+        <th align="left" style="padding:8px 0;border-bottom:2px solid #E7E5E4;
+                                color:#78716C;font-size:12px;font-weight:600;
+                                text-transform:uppercase;letter-spacing:.05em;">
+          {% translate "Pick list" %}
+        </th>
+        <th align="right" style="padding:8px 0;border-bottom:2px solid #E7E5E4;
+                                 color:#78716C;font-size:12px;font-weight:600;
+                                 text-transform:uppercase;letter-spacing:.05em;">
+          {% translate "Qty" %}
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+        <tr>
+          <td style="padding:10px 0;border-bottom:1px solid #F5F5F4;">
+            {{ item.product_name }}
+            <div style="color:#78716C;font-size:12px;">
+              {{ item.variant_name }}
+              {% if item.sku %} &middot; {{ item.sku }}{% endif %}
+            </div>
+          </td>
+          <td align="right" style="padding:10px 0;border-bottom:1px solid #F5F5F4;
+                                   white-space:nowrap;font-weight:600;">
+            &times; {{ item.quantity }}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0"
+         style="margin-top:24px;background:#F7F4EC;border-radius:10px;">
+    <tr>
+      <td style="padding:18px 20px;font-size:13px;line-height:1.7;">
+        <strong style="color:#14532D;">{% translate "Deliver to" %}</strong><br>
+        {{ order.ship_recipient }} &middot;
+        <a href="tel:{{ order.ship_phone }}" style="color:#15803D;">{{ order.ship_phone }}</a><br>
+        {% for line in order.shipping_address_lines %}{{ line }}<br>{% endfor %}
+
+        {% if order.requested_delivery_date %}
+          <div style="margin-top:12px;">
+            <strong style="color:#14532D;">{% translate "Requested" %}</strong><br>
+            {{ order.requested_delivery_date|date:"l, j F" }}
+            {% if order.delivery_slot %} &middot; {{ order.delivery_slot }}{% endif %}
+          </div>
+        {% endif %}
+
+        {% if order.ship_note or order.customer_note %}
+          <div style="margin-top:12px;">
+            <strong style="color:#14532D;">{% translate "Customer note" %}</strong><br>
+            {% if order.ship_note %}{{ order.ship_note }}<br>{% endif %}
+            {{ order.customer_note }}
+          </div>
+        {% endif %}
+      </td>
+    </tr>
+  </table>
+
+  <p style="margin:24px 0 0;">
+    <a href="{{ order_url }}"
+       style="display:inline-block;background:#15803D;color:#FFFFFF;
+              padding:11px 22px;border-radius:8px;text-decoration:none;
+              font-weight:600;font-size:14px;">
+      {% translate "Open this order" %}
+    </a>
+  </p>
+{% endblock %}
+
+{% block footer_note %}
+  {% translate "Internal notification for the XaninFarm team." %}
+{% endblock %}

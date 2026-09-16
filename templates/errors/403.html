@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Access denied" %} - {{ site_name }}{% endblock %}
+
+{% block content %}
+  <section class="container-page flex min-h-[60vh] flex-col items-center justify-center py-24 text-center">
+    <p class="eyebrow">{% translate "Error 403" %}</p>
+    <h1 class="mt-4 max-w-2xl text-balance font-display text-display-sm font-semibold sm:text-display-md">
+      {% translate "That gate is locked" %}
+    </h1>
+    <p class="mt-5 max-w-lg text-charcoal-500">
+      {% translate "You do not have permission to view this page. If you think that is a mistake, sign in with the right account or contact us." %}
+    </p>
+    <div class="mt-9 flex flex-wrap justify-center gap-3">
+      {% if not user.is_authenticated %}
+        <a href="{% url 'accounts:login' %}" class="btn-primary">{% translate "Sign in" %}</a>
+      {% endif %}
+      <a href="{% url 'core:home' %}" class="btn-secondary">{% translate "Back to the farm" %}</a>
+    </div>
+  </section>
+{% endblock %}

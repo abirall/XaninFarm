@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% load i18n farm_extras %}
+
+{% block title %}{% blocktranslate with number=order.number %}Tracking {{ number }}{% endblocktranslate %} - {{ site_name }}{% endblock %}
+{% block meta_description %}{% translate "Follow your XaninFarm order from our farm to your door." %}{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
+
+{% block content %}
+  <div class="container-page py-12 sm:py-16">
+    <div class="mx-auto max-w-2xl">
+
+      <div class="text-center">
+        <p class="eyebrow">{% translate "Order tracking" %}</p>
+        <h1 class="mt-3 font-display text-display-sm font-semibold">{{ order.number }}</h1>
+        <p class="mt-3 text-sm text-charcoal-500">
+          {% blocktranslate with placed=order.placed_at|date:"j F Y" %}Placed {{ placed }}{% endblocktranslate %}
+        </p>
+        <div class="mt-5 flex justify-center">
+          {% include "orders/partials/_order_status.html" %}
+        </div>
+      </div>
+
+      <section class="card mt-10 p-6 sm:p-8" aria-labelledby="progress-heading">
+        <h2 id="progress-heading" class="sr-only">{% translate "Delivery progress" %}</h2>
+        {% include "orders/partials/_order_timeline.html" %}
+      </section>
+
+      {# This page is authorised by a forwardable link rather than a login, so
+         it deliberately shows less than the signed-in order page: no email, no
+         phone number, no street address, and no per-line prices. #}
+      <section class="card mt-6 p-6 sm:p-8" aria-labelledby="summary-heading">
+        <h2 id="summary-heading" class="font-display text-lg font-semibold">{% translate "This delivery" %}</h2>
+
+        <ul class="mt-5 space-y-2 text-sm">
+          {% for item in order.items.all %}
+            <li class="flex items-baseline gap-2 text-charcoal-700">
+              <span class="text-xs font-semibold tabular-nums text-charcoal-400">{{ item.quantity }}&times;</span>
+              <span>{{ item.display_name }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+
+        <dl class="mt-6 grid gap-5 border-t border-cream-300 pt-5 sm:grid-cols-2">
+          <div>
+            <dt class="form-label">{% translate "Going to" %}</dt>
+            <dd class="text-sm text-charcoal-700">
+              {{ order.ship_recipient }}
+              <span class="block text-xs text-charcoal-500">{{ order.ship_area }}, {{ order.ship_district }}</span>
+            </dd>
+          </div>
+          {% if order.delivery_zone %}
+            <div>
+              <dt class="form-label">{% translate "Expected" %}</dt>
+              <dd class="text-sm text-charcoal-700">
+                {% if order.requested_delivery_date %}
+                  {{ order.requested_delivery_date|date:"j F Y" }}
+                {% else %}
+                  {{ order.delivery_zone.estimate_label }}
+                {% endif %}
+              </dd>
+            </div>
+          {% endif %}
+        </dl>
+
+        {% if order.tracking_note %}
+          <p class="mt-5 rounded-xl bg-cream-100 px-4 py-3 text-sm text-charcoal-700">{{ order.tracking_note }}</p>
+        {% endif %}
+      </section>
+
+      <div class="mt-8 text-center">
+        {% if user.is_authenticated %}
+          <a href="{{ order.get_absolute_url }}" class="btn-secondary">{% translate "Full order details" %}</a>
+        {% else %}
+          <a href="{% url 'accounts:login' %}?next={{ order.get_absolute_url|urlencode }}" class="btn-secondary">
+            {% translate "Sign in for full details" %}
+          </a>
+        {% endif %}
+      </div>
+
+      {% if site.support_phone %}
+        <p class="mt-8 text-center text-xs text-charcoal-400">
+          {% translate "Something not right?" %}
+          <a href="tel:{{ site.support_phone }}" class="font-medium text-farm-700 hover:underline">{{ site.support_phone }}</a>
+        </p>
+      {% endif %}
+    </div>
+  </div>
+{% endblock %}

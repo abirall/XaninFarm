@@ -1,0 +1,184 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load i18n farm_extras %}
+
+{% block title %}{{ batch.batch_number }} - {% translate "Dashboard" %}{% endblock %}
+{% block dash_title %}{{ batch.batch_number }}{% endblock %}
+
+{% block dash_sidebar %}
+  {% include "dashboard/partials/_sidebar.html" with current="batches" %}
+{% endblock %}
+
+{% block dash_actions %}
+  <a href="{% url 'dashboard:batches' %}" class="text-charcoal-500 hover:text-farm-700">
+    {% translate "Back to batches" %}
+  </a>
+{% endblock %}
+
+{% block dash_content %}
+  <div class="grid gap-6 xl:grid-cols-[1fr_20rem] xl:items-start">
+
+    <div class="space-y-6">
+
+      <section class="card p-5" aria-labelledby="qty-heading">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <h2 id="qty-heading" class="font-display text-base font-semibold">{% translate "Quantities" %}</h2>
+          {% include "dashboard/partials/_expiry_badge.html" %}
+        </div>
+
+        <dl class="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <div class="rounded-xl bg-cream-100 px-3 py-3 text-center">
+            <dt class="form-label">{% translate "Received" %}</dt>
+            <dd class="font-display text-xl font-semibold tabular-nums">{{ batch.quantity_received|quantity }}</dd>
+          </div>
+          <div class="rounded-xl bg-farm-50 px-3 py-3 text-center">
+            <dt class="form-label">{% translate "Available" %}</dt>
+            <dd class="font-display text-xl font-semibold tabular-nums text-farm-800">{{ batch.quantity_available|quantity }}</dd>
+          </div>
+          <div class="rounded-xl bg-honey-50 px-3 py-3 text-center">
+            <dt class="form-label">{% translate "Reserved" %}</dt>
+            <dd class="font-display text-xl font-semibold tabular-nums text-honey-900">{{ batch.quantity_reserved|quantity }}</dd>
+          </div>
+          <div class="rounded-xl bg-cream-100 px-3 py-3 text-center">
+            <dt class="form-label">{% translate "Shipped" %}</dt>
+            <dd class="font-display text-xl font-semibold tabular-nums">{{ batch.quantity_shipped|quantity }}</dd>
+          </div>
+        </dl>
+
+        <p class="form-hint mt-3">
+          {% translate "Reserved stock belongs to orders that are placed but not yet dispatched. It is not available to sell." %}
+        </p>
+      </section>
+
+      {# --- Correction --- #}
+      <section class="card p-5" aria-labelledby="adjust-heading">
+        <h2 id="adjust-heading" class="font-display text-base font-semibold">
+          {% translate "Correct the count" %}
+        </h2>
+        <p class="form-hint">
+          {% translate "Use after a physical stock count, spoilage or breakage. The difference is written to the movement log." %}
+        </p>
+
+        <form method="post" class="mt-4 flex flex-wrap items-end gap-3">
+          {% csrf_token %}
+          <div class="w-40">
+            {% include "partials/_field.html" with field=form.new_available %}
+          </div>
+          <div class="min-w-56 flex-1">
+            {% include "partials/_field.html" with field=form.reason %}
+          </div>
+          <button type="submit" class="btn-primary btn-sm">{% translate "Apply" %}</button>
+        </form>
+      </section>
+
+      {# --- Movement history --- #}
+      <section class="card overflow-x-auto" aria-labelledby="mv-heading">
+        <h2 id="mv-heading" class="px-5 pb-3 pt-5 font-display text-base font-semibold">
+          {% translate "Stock movements" %}
+        </h2>
+
+        {% if movements %}
+          <table class="w-full text-sm">
+            <thead class="border-y border-cream-300 text-left text-xs uppercase tracking-wider text-charcoal-500">
+              <tr>
+                <th scope="col" class="px-5 py-2.5 font-semibold">{% translate "When" %}</th>
+                <th scope="col" class="px-5 py-2.5 font-semibold">{% translate "Type" %}</th>
+                <th scope="col" class="px-5 py-2.5 text-right font-semibold">{% translate "Available" %}</th>
+                <th scope="col" class="px-5 py-2.5 text-right font-semibold">{% translate "Reserved" %}</th>
+                <th scope="col" class="px-5 py-2.5 font-semibold">{% translate "Note" %}</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-cream-200">
+              {% for move in movements %}
+                <tr>
+                  <td class="whitespace-nowrap px-5 py-2.5 text-xs text-charcoal-500">
+                    {{ move.created_at|date:"j M Y, g:i a" }}
+                    {% if move.performed_by %}
+                      <span class="block">{{ move.performed_by.get_short_name }}</span>
+                    {% endif %}
+                  </td>
+                  <td class="px-5 py-2.5"><span class="badge-muted">{{ move.get_movement_type_display }}</span></td>
+                  <td class="px-5 py-2.5 text-right tabular-nums {% if move.available_delta > 0 %}text-farm-700{% elif move.available_delta < 0 %}text-red-700{% endif %}">
+                    {% if move.available_delta > 0 %}+{% endif %}{{ move.available_delta|quantity }}
+                  </td>
+                  <td class="px-5 py-2.5 text-right tabular-nums text-charcoal-600">
+                    {% if move.reserved_delta > 0 %}+{% endif %}{{ move.reserved_delta|quantity }}
+                  </td>
+                  <td class="px-5 py-2.5 text-xs text-charcoal-600">
+                    {{ move.note|default:"—" }}
+                    {% if move.reference_id %}
+                      <span class="block text-charcoal-400">{{ move.reference_type }}: {{ move.reference_id }}</span>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <p class="px-5 pb-5 text-sm text-charcoal-500">{% translate "No movements recorded." %}</p>
+        {% endif %}
+      </section>
+    </div>
+
+    {# --- Side --- #}
+    <div class="space-y-6">
+      <section class="card p-5" aria-labelledby="meta-heading">
+        <h2 id="meta-heading" class="font-display text-base font-semibold">{% translate "Batch" %}</h2>
+        <dl class="mt-4 space-y-3 text-sm">
+          <div>
+            <dt class="form-label">{% translate "Product" %}</dt>
+            <dd class="text-charcoal-800">
+              <a href="{{ batch.variant.product.get_absolute_url }}" class="hover:text-farm-700">
+                {{ batch.variant.product.name }}
+              </a>
+              <span class="block text-xs text-charcoal-500">
+                {{ batch.variant.name }} &middot; {{ batch.variant.sku }}
+              </span>
+            </dd>
+          </div>
+          <div>
+            <dt class="form-label">{% translate "Status" %}</dt>
+            <dd><span class="badge-muted">{{ batch.get_status_display }}</span></dd>
+          </div>
+          <div>
+            <dt class="form-label">{% translate "Received" %}</dt>
+            <dd class="text-charcoal-800">{{ batch.received_date|date:"j M Y" }}</dd>
+          </div>
+          {% if batch.production_date %}
+            <div>
+              <dt class="form-label">{% translate "Produced" %}</dt>
+              <dd class="text-charcoal-800">{{ batch.production_date|date:"j M Y" }}</dd>
+            </div>
+          {% endif %}
+          <div>
+            <dt class="form-label">{% translate "Expires" %}</dt>
+            <dd class="text-charcoal-800">
+              {% if batch.expiry_date %}{{ batch.expiry_date|date:"j M Y" }}{% else %}{% translate "No expiry" %}{% endif %}
+            </dd>
+          </div>
+          {% if batch.unit_cost %}
+            <div>
+              <dt class="form-label">{% translate "Unit cost" %}</dt>
+              <dd class="tabular-nums text-charcoal-800">{{ batch.unit_cost|taka }}</dd>
+            </div>
+          {% endif %}
+          {% if batch.supplier %}
+            <div>
+              <dt class="form-label">{% translate "Supplier" %}</dt>
+              <dd class="text-charcoal-800">{{ batch.supplier }}</dd>
+            </div>
+          {% endif %}
+          {% if batch.storage_location %}
+            <div>
+              <dt class="form-label">{% translate "Stored" %}</dt>
+              <dd class="text-charcoal-800">{{ batch.storage_location }}</dd>
+            </div>
+          {% endif %}
+        </dl>
+
+        {% if batch.notes %}
+          <p class="mt-4 rounded-lg bg-cream-100 px-3 py-2 text-xs text-charcoal-700">{{ batch.notes }}</p>
+        {% endif %}
+      </section>
+    </div>
+  </div>
+{% endblock %}

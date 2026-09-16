@@ -1,0 +1,43 @@
+{% extends "accounts/base_auth.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Create an account" %} - {{ site_name }}{% endblock %}
+{% block auth_eyebrow %}{% translate "Join the farm" %}{% endblock %}
+{% block auth_title %}{% translate "Create an account" %}{% endblock %}
+{% block auth_subtitle %}{% translate "Fresh milk, honey and properly raised meat, delivered to your door." %}{% endblock %}
+
+{% block auth_body %}
+  {# The action keeps ?next= on the URL so RegisterView.get_success_url can
+     honour it after signing the new customer in. #}
+  <form method="post" class="space-y-5">
+    {% csrf_token %}
+
+    {% if form.non_field_errors %}
+      <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+        {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+      </div>
+    {% endif %}
+
+    {% include "partials/_field.html" with field=form.full_name %}
+    {% include "partials/_field.html" with field=form.email %}
+    {% include "partials/_field.html" with field=form.phone %}
+    {% include "partials/_field.html" with field=form.password1 %}
+    {% include "partials/_field.html" with field=form.password2 %}
+
+    <div class="space-y-3 border-t border-cream-300 pt-5">
+      {% include "partials/_field.html" with field=form.marketing_opt_in %}
+      {% include "partials/_field.html" with field=form.accept_terms %}
+      {# accept_terms renders as a checkbox, so _field.html puts its error
+         below without the aria-describedby wiring the text inputs get. #}
+    </div>
+
+    <button type="submit" class="btn-primary w-full !py-3">{% translate "Create my account" %}</button>
+  </form>
+{% endblock %}
+
+{% block auth_footer %}
+  {% translate "Already have an account?" %}
+  <a href="{% url 'accounts:login' %}" class="font-semibold text-farm-700 hover:underline">
+    {% translate "Sign in" %}
+  </a>
+{% endblock %}

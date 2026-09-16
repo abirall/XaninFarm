@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% load i18n %}
+{#
+  Shell for every staff page.
+
+  Deliberately plainer than the storefront: this is a tool people look at for
+  hours, so it trades the shop's generous spacing for density and legibility.
+#}
+{% block robots %}noindex, nofollow{% endblock %}
+
+{% block content %}
+  <div class="border-b border-cream-300 bg-white">
+    <div class="container-page flex flex-wrap items-center justify-between gap-4 py-4">
+      <div class="flex items-center gap-3">
+        <span class="badge-farm">{% translate "Staff" %}</span>
+        <h1 class="font-display text-xl font-semibold">{% block dash_title %}{% endblock %}</h1>
+      </div>
+      <div class="flex items-center gap-3 text-sm">
+        {% block dash_actions %}{% endblock %}
+        <a href="{% url 'core:home' %}" class="text-charcoal-500 hover:text-farm-700">
+          {% translate "View shop" %}
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="container-page py-8">
+    <div class="grid gap-8 lg:grid-cols-[14rem_1fr] lg:items-start">
+      {# Children override this to mark their own nav item. A block rather than
+         a context variable, so the highlight lives with the page it describes. #}
+      <div class="lg:sticky lg:top-24">
+        {% block dash_sidebar %}
+          {% include "dashboard/partials/_sidebar.html" %}
+        {% endblock %}
+      </div>
+      <div class="min-w-0">
+        {% block dash_content %}{% endblock %}
+      </div>
+    </div>
+  </div>
+{% endblock %}

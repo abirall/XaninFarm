@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{{ page.seo_title|default:page.title }} - {{ site_name }}{% endblock %}
+{% block meta_description %}{{ page.seo_description|default:page.summary }}{% endblock %}
+{% block og_title %}{{ page.title }}{% endblock %}
+{% block og_description %}{{ page.summary }}{% endblock %}
+
+{% block content %}
+  <article class="container-page max-w-3xl py-16 sm:py-24">
+    <p class="eyebrow">{{ site_name }}</p>
+    <h1 class="mt-3 text-balance font-display text-display-sm font-semibold sm:text-display-md">
+      {{ page.title }}
+    </h1>
+    {% if page.summary %}
+      <p class="mt-5 text-lg leading-relaxed text-charcoal-600">{{ page.summary }}</p>
+    {% endif %}
+
+    <hr class="my-10 border-cream-300">
+
+    {# Authored by staff in the admin, so the HTML is trusted markup, not
+       user-submitted content. #}
+    <div class="prose-farm">{{ page.body|safe }}</div>
+
+    <p class="mt-14 text-xs text-charcoal-400">
+      {% blocktranslate with updated=page.updated_at|date:"j F Y" %}Last updated {{ updated }}{% endblocktranslate %}
+    </p>
+  </article>
+{% endblock %}

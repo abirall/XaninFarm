@@ -1,0 +1,106 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load i18n farm_extras %}
+
+{% block title %}{% translate "Payments" %} - {% translate "Dashboard" %}{% endblock %}
+{% block dash_title %}{% translate "Payments" %}{% endblock %}
+
+{% block dash_sidebar %}
+  {% include "dashboard/partials/_sidebar.html" with current="payments" %}
+{% endblock %}
+
+{% block dash_content %}
+
+  <div class="card p-5">
+    <p class="form-label">{% translate "Cash on delivery still to collect" %}</p>
+    <p class="font-display text-2xl font-semibold tabular-nums">{{ outstanding_cash|taka }}</p>
+    <p class="mt-1 text-xs text-charcoal-400">
+      {% translate "Open orders awaiting payment. Settled automatically when a cash order is marked delivered." %}
+    </p>
+  </div>
+
+  <div class="mt-5 flex flex-wrap gap-1.5">
+    <a href="{% url 'dashboard:payments' %}"
+       class="badge {% if not active_status %}bg-farm-700 text-cream-50{% else %}bg-cream-200 text-charcoal-700 hover:bg-cream-300{% endif %}">
+      {% translate "All" %}
+    </a>
+    {% for value, label in status_choices %}
+      <a href="?{% query_replace status=value page=None %}"
+         class="badge {% if active_status == value %}bg-farm-700 text-cream-50{% else %}bg-cream-200 text-charcoal-700 hover:bg-cream-300{% endif %}">
+        {{ label }}
+      </a>
+    {% endfor %}
+  </div>
+
+  {% if page_obj.object_list %}
+    <div class="card mt-5 overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="border-b border-cream-300 text-left text-xs uppercase tracking-wider text-charcoal-500">
+          <tr>
+            <th scope="col" class="px-4 py-3 font-semibold">{% translate "Reference" %}</th>
+            <th scope="col" class="px-4 py-3 font-semibold">{% translate "Order" %}</th>
+            <th scope="col" class="px-4 py-3 font-semibold">{% translate "Provider" %}</th>
+            <th scope="col" class="px-4 py-3 font-semibold">{% translate "When" %}</th>
+            <th scope="col" class="px-4 py-3 font-semibold">{% translate "Status" %}</th>
+            <th scope="col" class="px-4 py-3 text-right font-semibold">{% translate "Amount" %}</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-cream-200">
+          {% for payment in page_obj.object_list %}
+            <tr class="hover:bg-cream-50">
+              <td class="px-4 py-3">
+                <span class="block font-mono text-xs text-charcoal-800">{{ payment.reference }}</span>
+                {% if payment.provider_reference %}
+                  <span class="block font-mono text-xs text-charcoal-400">{{ payment.provider_reference }}</span>
+                {% endif %}
+              </td>
+              <td class="px-4 py-3">
+                <a href="{% url 'dashboard:order_detail' payment.order.number %}"
+                   class="font-medium text-charcoal-900 hover:text-farm-700">{{ payment.order.number }}</a>
+              </td>
+              <td class="px-4 py-3">
+                <span class="block text-charcoal-700">{{ payment.get_provider_display }}</span>
+                {% if payment.instrument_hint %}
+                  <span class="block text-xs text-charcoal-400">{{ payment.instrument_hint }}</span>
+                {% endif %}
+              </td>
+              <td class="whitespace-nowrap px-4 py-3 text-charcoal-600">
+                {{ payment.initiated_at|date:"j M Y" }}
+                <span class="block text-xs text-charcoal-400">{{ payment.initiated_at|date:"g:i a" }}</span>
+              </td>
+              <td class="px-4 py-3">
+                <span class="badge {% if payment.is_paid %}bg-farm-100 text-farm-800{% elif payment.is_open %}bg-honey-100 text-honey-900{% else %}bg-red-100 text-red-800{% endif %}">
+                  {{ payment.get_status_display }}
+                </span>
+                {% if payment.failure_reason %}
+                  <span class="mt-0.5 block text-xs text-red-700">{{ payment.failure_reason|truncatechars:40 }}</span>
+                {% endif %}
+              </td>
+              <td class="whitespace-nowrap px-4 py-3 text-right font-semibold tabular-nums">
+                {{ payment.amount|taka }}
+                {# Status-gated: refunded_amount aggregates over the refunds
+                   table, so reading it on every row would be 25 extra queries
+                   a page for information almost none of them have. #}
+                {% if payment.status == "refunded" or payment.status == "partially_refunded" %}
+                  <span class="block text-xs font-normal text-charcoal-500">
+                    &minus;{{ payment.refunded_amount|taka }} {% translate "refunded" %}
+                  </span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% include "partials/_pagination.html" with paginator=page_obj.paginator %}
+
+  {% else %}
+    <div class="surface mt-5 px-6 py-16 text-center">
+      <p class="text-sm text-charcoal-500">{% translate "No payments match this filter." %}</p>
+    </div>
+  {% endif %}
+
+  <p class="mt-4 text-xs text-charcoal-400">
+    {% translate "No card details are ever stored. Only the provider's reference and a masked hint are kept." %}
+  </p>
+{% endblock %}

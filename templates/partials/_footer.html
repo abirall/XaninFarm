@@ -1,0 +1,115 @@
+{% load i18n %}
+
+<footer class="mt-22 border-t border-cream-300 bg-farm-900 text-cream-200">
+  <div class="container-page py-16">
+    <div class="grid gap-12 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
+
+      {# --- Brand --- #}
+      <div>
+        <div class="flex items-center gap-2.5">
+          <span class="grid h-10 w-10 place-items-center rounded-full bg-cream-100 text-farm-800">
+            <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 2C8.5 5 6 8.4 6 12.2A6 6 0 0 0 11 18.1V22h2v-3.9a6 6 0 0 0 5-5.9C18 8.4 15.5 5 12 2Zm0 3.4c2.1 2.2 4 4.8 4 6.8a4 4 0 0 1-3 3.9V11h-2v5.1a4 4 0 0 1-3-3.9c0-2 1.9-4.6 4-6.8Z"/>
+            </svg>
+          </span>
+          <span class="font-display text-xl font-semibold text-cream-50">{{ site_name }}</span>
+        </div>
+        <p class="mt-5 max-w-sm text-sm leading-relaxed text-cream-300">
+          {% if site.about_short %}{{ site.about_short }}{% else %}{{ site_tagline }}{% endif %}
+        </p>
+
+        {% if site.facebook_url or site.instagram_url or site.youtube_url %}
+          <div class="mt-6 flex gap-2">
+            {% if site.facebook_url %}
+              <a href="{{ site.facebook_url }}" rel="noopener noreferrer" target="_blank"
+                 class="grid h-10 w-10 place-items-center rounded-full bg-farm-800 hover:bg-farm-700">
+                <span class="sr-only">Facebook</span>
+                <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M13.5 22v-8h2.7l.4-3.1h-3.1V8.9c0-.9.3-1.5 1.6-1.5h1.6V4.6c-.3 0-1.3-.1-2.4-.1-2.4 0-4 1.5-4 4.1v2.3H8v3.1h2.3v8h3.2Z"/></svg>
+              </a>
+            {% endif %}
+            {% if site.instagram_url %}
+              <a href="{{ site.instagram_url }}" rel="noopener noreferrer" target="_blank"
+                 class="grid h-10 w-10 place-items-center rounded-full bg-farm-800 hover:bg-farm-700">
+                <span class="sr-only">Instagram</span>
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+              </a>
+            {% endif %}
+            {% if site.youtube_url %}
+              <a href="{{ site.youtube_url }}" rel="noopener noreferrer" target="_blank"
+                 class="grid h-10 w-10 place-items-center rounded-full bg-farm-800 hover:bg-farm-700">
+                <span class="sr-only">YouTube</span>
+                <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M21.6 7.2a2.5 2.5 0 0 0-1.8-1.8C18.2 5 12 5 12 5s-6.2 0-7.8.4A2.5 2.5 0 0 0 2.4 7.2C2 8.8 2 12 2 12s0 3.2.4 4.8a2.5 2.5 0 0 0 1.8 1.8C5.8 19 12 19 12 19s6.2 0 7.8-.4a2.5 2.5 0 0 0 1.8-1.8C22 15.2 22 12 22 12s0-3.2-.4-4.8ZM10 15.2V8.8L15.5 12 10 15.2Z"/></svg>
+              </a>
+            {% endif %}
+          </div>
+        {% endif %}
+      </div>
+
+      {# --- Shop --- #}
+      <nav aria-labelledby="footer-shop">
+        <h2 id="footer-shop" class="text-xs font-semibold uppercase tracking-[0.16em] text-honey-300">
+          {% translate "Shop" %}
+        </h2>
+        <ul class="mt-5 space-y-3 text-sm">
+          <li><a href="{% url 'products:list' %}" class="text-cream-300 hover:text-cream-50">{% translate "Everything" %}</a></li>
+          {% for category in nav_categories %}
+            <li><a href="{{ category.get_absolute_url }}" class="text-cream-300 hover:text-cream-50">{{ category.name }}</a></li>
+          {% endfor %}
+        </ul>
+      </nav>
+
+      {# --- Help --- #}
+      <nav aria-labelledby="footer-help">
+        <h2 id="footer-help" class="text-xs font-semibold uppercase tracking-[0.16em] text-honey-300">
+          {% translate "Help" %}
+        </h2>
+        <ul class="mt-5 space-y-3 text-sm">
+          {% if user.is_authenticated %}
+            <li><a href="{% url 'orders:list' %}" class="text-cream-300 hover:text-cream-50">{% translate "Track an order" %}</a></li>
+            <li><a href="{% url 'accounts:profile' %}" class="text-cream-300 hover:text-cream-50">{% translate "My account" %}</a></li>
+          {% else %}
+            <li><a href="{% url 'accounts:login' %}" class="text-cream-300 hover:text-cream-50">{% translate "Sign in" %}</a></li>
+            <li><a href="{% url 'accounts:register' %}" class="text-cream-300 hover:text-cream-50">{% translate "Create an account" %}</a></li>
+          {% endif %}
+          {% for page in footer_pages %}
+            <li><a href="{{ page.get_absolute_url }}" class="text-cream-300 hover:text-cream-50">{{ page.title }}</a></li>
+          {% endfor %}
+        </ul>
+      </nav>
+
+      {# --- Contact --- #}
+      <div>
+        <h2 class="text-xs font-semibold uppercase tracking-[0.16em] text-honey-300">
+          {% translate "Talk to the farm" %}
+        </h2>
+        <ul class="mt-5 space-y-3 text-sm text-cream-300">
+          {% if site.support_phone %}
+            <li><a href="tel:{{ site.support_phone }}" class="font-medium text-cream-50 hover:text-honey-200">{{ site.support_phone }}</a></li>
+          {% endif %}
+          {% if site.whatsapp_number %}
+            <li>{% translate "WhatsApp" %}: {{ site.whatsapp_number }}</li>
+          {% endif %}
+          {% if site.support_email %}
+            <li><a href="mailto:{{ site.support_email }}" class="hover:text-cream-50">{{ site.support_email }}</a></li>
+          {% endif %}
+          {% if site.opening_hours %}<li>{{ site.opening_hours }}</li>{% endif %}
+          {% if site.farm_address %}<li class="leading-relaxed">{{ site.farm_address }}</li>{% endif %}
+        </ul>
+
+        {% if site.cod_enabled %}
+          <p class="mt-6 inline-flex items-center gap-2 rounded-full bg-farm-800 px-3.5 py-2 text-xs font-medium text-cream-200">
+            <svg class="h-4 w-4 text-honey-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
+            </svg>
+            {% translate "Cash on delivery available" %}
+          </p>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="mt-14 flex flex-col gap-3 border-t border-farm-800 pt-8 text-xs text-cream-400 sm:flex-row sm:items-center sm:justify-between">
+      <p>&copy; {% now "Y" %} {{ site_name }}. {% translate "All rights reserved." %}</p>
+      <p>{{ site_tagline }}</p>
+    </div>
+  </div>
+</footer>

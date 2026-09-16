@@ -1,0 +1,292 @@
+{% load i18n farm_extras %}
+{#
+  The cart, as a swappable fragment.
+
+  Every mutation re-renders this whole block from a freshly priced quote, so
+  the numbers on screen are always the server's. Nothing here is computed in
+  the browser.
+  Context: cart, quote.
+#}
+<div id="cart-panel" class="htmx-fade">
+
+  {# The authoritative basket count for the header badge (see app.js). #}
+  <span class="hidden" data-cart-total-quantity="{{ quote.total_quantity }}"></span>
+
+  {% if quote.is_empty %}
+    <div class="surface flex flex-col items-center px-8 py-20 text-center">
+      <span class="grid h-16 w-16 place-items-center rounded-full bg-cream-200 text-charcoal-400">
+        <svg class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.4a.75.75 0 0 1 .73.58L5 7m0 0 1.6 7.6a1.5 1.5 0 0 0 1.47 1.15h8.6a1.5 1.5 0 0 0 1.47-1.2L20 7.5H5Zm4 13.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm9 0a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z"/>
+        </svg>
+      </span>
+      <h2 class="mt-6 font-display text-2xl font-semibold">{% translate "Your basket is empty" %}</h2>
+      <p class="mt-2 max-w-sm text-sm text-charcoal-500">
+        {% translate "Fresh milk, honey straight from the hive, chicken raised properly. Have a look." %}
+      </p>
+      <a href="{% url 'products:list' %}" class="btn-primary mt-8">{% translate "Start shopping" %}</a>
+    </div>
+
+  {% else %}
+    <div class="grid gap-8 lg:grid-cols-[1fr_22rem] lg:items-start">
+
+      {# =============================================================== #}
+      {# Lines                                                           #}
+      {# =============================================================== #}
+      <div class="card divide-y divide-cream-300">
+        {% for item in quote.items %}
+          {% with variant=item.variant product=item.variant.product %}
+            <div class="flex gap-4 p-5 sm:gap-5 sm:p-6">
+
+              <a href="{{ product.get_absolute_url }}" class="shrink-0">
+                {% if product.primary_image %}
+                  <img src="{{ product.primary_image.image.url }}"
+                       alt="{{ product.primary_image.alt_text }}"
+                       width="112" height="112" loading="lazy"
+                       class="h-20 w-20 rounded-2xl object-cover sm:h-28 sm:w-28">
+                {% else %}
+                  <span class="grid h-20 w-20 place-items-center rounded-2xl bg-cream-100 text-farm-300 sm:h-28 sm:w-28">
+                    <svg class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="1.4" viewBox="0 0 24 24" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 21c-4.97 0-9-4.03-9-9 0-4.97 4.03-9 9-9s9 4.03 9 9M12 21c3.5-3 4.5-7 4.5-9M12 21V8"/>
+                    </svg>
+                  </span>
+                {% endif %}
+              </a>
+
+              <div class="min-w-0 flex-1">
+                <div class="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
+                  <div class="min-w-0">
+                    <h3 class="truncate font-display text-base font-semibold">
+                      <a href="{{ product.get_absolute_url }}" class="hover:text-farm-700">{{ product.name }}</a>
+                    </h3>
+                    <p class="mt-0.5 text-xs text-charcoal-500">{{ variant.name }} &middot; {{ variant.display_unit }}</p>
+                  </div>
+                  <p class="shrink-0 font-semibold tabular-nums">{{ item.line_total|taka }}</p>
+                </div>
+
+                <p class="mt-1 text-xs text-charcoal-400">
+                  {% blocktranslate with price=item.unit_price|taka %}{{ price }} each{% endblocktranslate %}
+                  {% if item.line_savings %}
+                    <span class="ml-1 font-medium text-farm-700">
+                      {% blocktranslate with saved=item.line_savings|taka %}You save {{ saved }}{% endblocktranslate %}
+                    </span>
+                  {% endif %}
+                </p>
+
+                {# --- Per-line stock warning --- #}
+                {% for issue in quote.stock_issues %}
+                  {% if issue.item.pk == item.pk %}
+                    <p class="mt-3 flex items-start gap-2 rounded-xl bg-red-50 px-3 py-2 text-xs text-red-800" role="alert">
+                      <svg class="mt-px h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4.5m0 3.5h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                      </svg>
+                      <span>{{ issue.message }}</span>
+                    </p>
+                  {% endif %}
+                {% endfor %}
+
+                <div class="mt-4 flex flex-wrap items-center gap-3">
+                  {# Quantity. The change event from the stepper bubbles to the
+                     form, which is what hx-trigger listens for. #}
+                  <form action="{% url 'cart:update' item.pk %}" method="post"
+                        hx-post="{% url 'cart:update' item.pk %}"
+                        hx-target="#cart-panel"
+                        hx-swap="outerHTML"
+                        hx-trigger="change, submit"
+                        data-qty
+                        class="flex items-center rounded-full border border-charcoal-200 bg-white">
+                    {% csrf_token %}
+                    <button type="button" data-qty-step="-1"
+                            class="grid h-9 w-9 place-items-center rounded-l-full text-charcoal-600 hover:bg-cream-100">
+                      <span class="sr-only">{% translate "Decrease quantity" %}</span>
+                      <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.6" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" d="M5 12h14"/>
+                      </svg>
+                    </button>
+                    <label for="qty-{{ item.pk }}" class="sr-only">
+                      {% blocktranslate with name=product.name %}Quantity for {{ name }}{% endblocktranslate %}
+                    </label>
+                    <input type="number" id="qty-{{ item.pk }}" name="quantity" value="{{ item.quantity }}"
+                           min="1" step="1" inputmode="numeric"
+                           class="!w-12 !border-0 !bg-transparent !p-0 !text-center !text-sm !shadow-none focus:!ring-0">
+                    <button type="button" data-qty-step="1"
+                            class="grid h-9 w-9 place-items-center rounded-r-full text-charcoal-600 hover:bg-cream-100">
+                      <span class="sr-only">{% translate "Increase quantity" %}</span>
+                      <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.6" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" d="M12 5v14M5 12h14"/>
+                      </svg>
+                    </button>
+                    <noscript>
+                      <button type="submit" class="px-3 text-xs font-medium text-farm-700 underline">
+                        {% translate "Update" %}
+                      </button>
+                    </noscript>
+                  </form>
+
+                  {# A separate form: HTML forms cannot nest. #}
+                  <form action="{% url 'cart:remove' item.pk %}" method="post"
+                        hx-post="{% url 'cart:remove' item.pk %}"
+                        hx-target="#cart-panel"
+                        hx-swap="outerHTML">
+                    {% csrf_token %}
+                    <button type="submit" class="text-xs font-medium text-charcoal-400 underline underline-offset-2 hover:text-red-700">
+                      {% translate "Remove" %}
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+          {% endwith %}
+        {% endfor %}
+
+        <div class="flex items-center justify-between p-5 sm:px-6">
+          <a href="{% url 'products:list' %}" class="text-sm font-medium text-farm-700 hover:underline">
+            {% translate "Continue shopping" %}
+          </a>
+          <form action="{% url 'cart:clear' %}" method="post"
+                hx-post="{% url 'cart:clear' %}"
+                hx-target="#cart-panel"
+                hx-swap="outerHTML"
+                hx-confirm="{% translate 'Empty your whole basket?' %}">
+            {% csrf_token %}
+            <button type="submit" class="text-xs text-charcoal-400 underline underline-offset-2 hover:text-red-700">
+              {% translate "Empty basket" %}
+            </button>
+          </form>
+        </div>
+      </div>
+
+      {# =============================================================== #}
+      {# Summary                                                         #}
+      {# =============================================================== #}
+      <div class="lg:sticky lg:top-24">
+        <div class="card p-6">
+          <h2 class="font-display text-lg font-semibold">{% translate "Order summary" %}</h2>
+
+          {# --- Coupon --- #}
+          <div class="mt-5 border-b border-cream-300 pb-5">
+            {% if quote.coupon %}
+              <div class="flex items-center justify-between gap-3 rounded-xl bg-farm-50 px-3 py-2.5">
+                <span class="min-w-0">
+                  <span class="block truncate text-sm font-semibold text-farm-800">{{ quote.coupon.code }}</span>
+                  <span class="block text-xs text-farm-700">{% translate "Coupon applied" %}</span>
+                </span>
+                <form action="{% url 'cart:coupon_remove' %}" method="post"
+                      hx-post="{% url 'cart:coupon_remove' %}"
+                      hx-target="#cart-panel" hx-swap="outerHTML">
+                  {% csrf_token %}
+                  <button type="submit" class="shrink-0 text-xs text-charcoal-500 underline hover:text-red-700">
+                    {% translate "Remove" %}
+                  </button>
+                </form>
+              </div>
+            {% else %}
+              <form action="{% url 'cart:coupon_apply' %}" method="post"
+                    hx-post="{% url 'cart:coupon_apply' %}"
+                    hx-target="#cart-panel" hx-swap="outerHTML">
+                {% csrf_token %}
+                <label for="coupon-code" class="form-label">{% translate "Discount code" %}</label>
+                <div class="flex gap-2">
+                  <input type="text" id="coupon-code" name="code" autocomplete="off"
+                         placeholder="{% translate 'FARM10' %}" class="!text-sm uppercase">
+                  <button type="submit" class="btn-secondary btn-sm shrink-0">{% translate "Apply" %}</button>
+                </div>
+              </form>
+            {% endif %}
+
+            {% if quote.coupon_error %}
+              <p class="form-error mt-2" role="alert">
+                <svg class="mt-px h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4.5m0 3.5h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+                </svg>
+                <span>{{ quote.coupon_error }}</span>
+              </p>
+            {% endif %}
+          </div>
+
+          {# --- Totals --- #}
+          <dl class="mt-5 space-y-3 text-sm">
+            <div class="flex justify-between">
+              <dt class="text-charcoal-600">{% translate "Subtotal" %}</dt>
+              <dd class="font-medium tabular-nums">{{ quote.subtotal|taka }}</dd>
+            </div>
+
+            {% if quote.discount %}
+              <div class="flex justify-between text-farm-700">
+                <dt>{% translate "Discount" %}</dt>
+                <dd class="font-medium tabular-nums">&minus;{{ quote.discount|taka }}</dd>
+              </div>
+            {% endif %}
+
+            <div class="flex justify-between">
+              <dt class="text-charcoal-600">{% translate "Delivery" %}</dt>
+              <dd class="font-medium tabular-nums">
+                {% if quote.has_free_delivery %}
+                  <span class="text-farm-700">{% translate "Free" %}</span>
+                {% else %}
+                  {{ quote.delivery_fee|taka }}
+                {% endif %}
+              </dd>
+            </div>
+
+            {% if quote.delivery_discount %}
+              <div class="flex justify-between text-farm-700">
+                <dt>{% translate "Delivery discount" %}</dt>
+                <dd class="font-medium tabular-nums">&minus;{{ quote.delivery_discount|taka }}</dd>
+              </div>
+            {% endif %}
+
+            <div class="flex justify-between border-t border-cream-300 pt-3 text-base">
+              <dt class="font-display font-semibold">{% translate "Total" %}</dt>
+              <dd class="font-display font-semibold tabular-nums">{{ quote.total|taka }}</dd>
+            </div>
+          </dl>
+
+          {% if quote.savings %}
+            <p class="mt-3 rounded-xl bg-honey-50 px-3 py-2 text-xs font-medium text-honey-900">
+              {% blocktranslate with saved=quote.savings|taka %}You are saving {{ saved }} on this order.{% endblocktranslate %}
+            </p>
+          {% endif %}
+
+          {% if quote.amount_to_free_delivery %}
+            <p class="mt-3 text-xs text-charcoal-500">
+              {% blocktranslate with amount=quote.amount_to_free_delivery|taka %}Add {{ amount }} more for free delivery.{% endblocktranslate %}
+            </p>
+          {% endif %}
+
+          {# --- Blockers, then the checkout button --- #}
+          {% if not quote.meets_minimum %}
+            <p class="mt-5 rounded-xl bg-honey-50 px-3 py-2.5 text-xs text-honey-900" role="alert">
+              {% blocktranslate with minimum=quote.min_order_amount|taka %}Orders start at {{ minimum }} in your area.{% endblocktranslate %}
+            </p>
+          {% elif quote.stock_issues %}
+            <p class="mt-5 rounded-xl bg-red-50 px-3 py-2.5 text-xs text-red-800" role="alert">
+              {% translate "Please fix the quantities flagged above before checking out." %}
+            </p>
+          {% endif %}
+
+          {% if quote.is_checkoutable %}
+            <a href="{% url 'checkout:start' %}" class="btn-primary mt-6 w-full !py-3.5">
+              {% translate "Checkout" %}
+              <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12l-7.5 7.5M21 12H3"/>
+              </svg>
+            </a>
+          {% else %}
+            <button type="button" class="btn-primary mt-6 w-full !py-3.5" disabled aria-disabled="true">
+              {% translate "Checkout" %}
+            </button>
+          {% endif %}
+
+          <p class="mt-4 flex items-center justify-center gap-1.5 text-xs text-charcoal-400">
+            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V7.5a4.5 4.5 0 1 0-9 0v3m-1.5 0h12a1.5 1.5 0 0 1 1.5 1.5v7a1.5 1.5 0 0 1-1.5 1.5H6a1.5 1.5 0 0 1-1.5-1.5v-7A1.5 1.5 0 0 1 6 10.5Z"/>
+            </svg>
+            {% translate "Cash on delivery, or pay online" %}
+          </p>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+</div>
+
+{% include "partials/_toasts_oob.html" %}

@@ -1,0 +1,190 @@
+# =============================================================================
+# XaninFarm - development stack
+#
+#   docker compose up --build
+#   docker compose run --rm web python manage.py migrate
+#   docker compose run --rm web python manage.py createsuperuser
+#
+# Shop        http://localhost:8000
+# Dashboard   http://localhost:8000/dashboard/
+# Mail        http://localhost:8025
+#
+# The source tree is bind-mounted, so edits reload without a rebuild. Rebuild
+# only when requirements or package.json change.
+# =============================================================================
+
+name: ${COMPOSE_PROJECT_NAME:-xaninfarm}
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # Data
+  # ---------------------------------------------------------------------------
+  db:
+    image: postgres:16-alpine
+    env_file:
+      - ${COMPOSE_ENV_FILE:-.env}
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-xaninfarm}
+      POSTGRES_USER: ${POSTGRES_USER:-xaninfarm}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-xaninfarm}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      # Exposed so you can point a GUI client at it. Not done in production.
+      - "${POSTGRES_HOST_PORT:-5432}:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-xaninfarm} -d ${POSTGRES_DB:-xaninfarm}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    # appendonly keeps the Celery queue across restarts, so a task queued just
+    # before `compose down` still runs afterwards.
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "${REDIS_HOST_PORT:-6379}:6379"
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    ports:
+      - "${MAILHOG_SMTP_HOST_PORT:-1025}:1025" # SMTP
+      - "${MAILHOG_WEB_HOST_PORT:-8025}:8025" # web UI
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Application
+  # ---------------------------------------------------------------------------
+  web:
+    build:
+      context: .
+      target: runtime
+      args:
+        REQUIREMENTS: dev
+    command: python manage.py runserver 0.0.0.0:8000
+    env_file: &env_file
+      - ${COMPOSE_ENV_FILE:-.env}
+    environment: &django_env
+      DJANGO_SETTINGS_MODULE: ${DJANGO_SETTINGS_MODULE:-config.settings.dev}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-insecure-dev-key-override-me}
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-True}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0,web}
+      DJANGO_CSRF_TRUSTED_ORIGINS: ${DJANGO_CSRF_TRUSTED_ORIGINS:-http://localhost:8000,http://127.0.0.1:8000}
+      POSTGRES_DB: ${POSTGRES_DB:-xaninfarm}
+      POSTGRES_USER: ${POSTGRES_USER:-xaninfarm}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-xaninfarm}
+      POSTGRES_HOST: ${POSTGRES_HOST:-db}
+      POSTGRES_PORT: ${POSTGRES_PORT:-5432}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis:6379/1}
+      CELERY_RESULT_BACKEND: ${CELERY_RESULT_BACKEND:-redis://redis:6379/2}
+      EMAIL_BACKEND: ${EMAIL_BACKEND:-django.core.mail.backends.smtp.EmailBackend}
+      EMAIL_HOST: ${EMAIL_HOST:-mailhog}
+      EMAIL_PORT: ${EMAIL_PORT:-1025}
+      EMAIL_USE_TLS: ${EMAIL_USE_TLS:-False}
+      SITE_URL: ${SITE_URL:-http://localhost:8000}
+      SITE_BASE_URL: ${SITE_BASE_URL:-http://localhost:8000}
+      ENABLED_PAYMENT_PROVIDERS: ${ENABLED_PAYMENT_PROVIDERS:-cod,mock}
+      PAYMENT_SANDBOX: ${PAYMENT_SANDBOX:-True}
+      # Only the web container migrates; the workers must not race it.
+      RUN_MIGRATIONS: ${RUN_MIGRATIONS:-1}
+      WAIT_FOR_DB: ${WAIT_FOR_DB:-1}
+      WAIT_FOR_REDIS: ${WAIT_FOR_REDIS:-1}
+    volumes:
+      # Live reload. Named volumes shadow the bind mount for directories the
+      # container writes to, so container-generated files never land in the
+      # working tree and host file modes never break them.
+      - .:/app
+      - static_files:/app/staticfiles
+      - media_files:/app/mediafiles
+    ports:
+      - "${WEB_HOST_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      target: runtime
+      args:
+        REQUIREMENTS: dev
+    command: celery -A config worker --loglevel=info --concurrency=2
+    env_file: *env_file
+    environment:
+      <<: *django_env
+      # The worker waits for the web container to finish migrating instead of
+      # running migrations itself.
+      RUN_MIGRATIONS: "0"
+    volumes:
+      - .:/app
+      - media_files:/app/mediafiles
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  beat:
+    build:
+      context: .
+      target: runtime
+      args:
+        REQUIREMENTS: dev
+    # DatabaseScheduler reads the schedule from django-celery-beat's tables,
+    # so this container needs the database as well as the broker.
+    command: celery -A config beat --loglevel=info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    env_file: *env_file
+    environment:
+      <<: *django_env
+      RUN_MIGRATIONS: "0"
+    volumes:
+      - .:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ---------------------------------------------------------------------------
+  # Tailwind watcher
+  #
+  # Separate from the web container so the Python image carries no node
+  # toolchain. Writes static/css/app.css straight into the bind-mounted tree.
+  # ---------------------------------------------------------------------------
+  tailwind:
+    image: node:22-slim
+    working_dir: /app
+    command: sh -c "npm install --no-audit --no-fund && npm run dev"
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    name: ${POSTGRES_VOLUME_NAME:-xaninfarm_postgres_data}
+  redis_data:
+    name: ${REDIS_VOLUME_NAME:-xaninfarm_redis_data}
+  static_files:
+    name: ${STATIC_VOLUME_NAME:-xaninfarm_static_files}
+  media_files:
+    name: ${MEDIA_VOLUME_NAME:-xaninfarm_media_files}
+  node_modules:
+    name: ${NODE_MODULES_VOLUME_NAME:-xaninfarm_node_modules}

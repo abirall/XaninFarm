@@ -1,0 +1,20 @@
+{% comment %}
+  Out-of-band toast delivery for HTMX fragments.
+
+  A partial swap never touches the #toasts region in base.html, so any message
+  the view queued would sit in the session and surface on some unrelated later
+  page. Including this at the *top level* of a fragment appends the messages to
+  the live toast region instead. htmx only processes hx-swap-oob on top-level
+  elements of the response, so this must never be nested inside the fragment's
+  root element.
+
+  The request.htmx guard matters: on a full-page render the same fragment is
+  included by its parent template, where hx-swap-oob is inert markup and base
+  .html has already rendered these messages into #toasts. Without the guard
+  they would appear twice, the second time as a stray block mid-page.
+{% endcomment %}
+{% if request.htmx and messages %}
+  <div hx-swap-oob="beforeend:#toasts">
+    {% include "partials/_messages.html" %}
+  </div>
+{% endif %}

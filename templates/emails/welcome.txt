@@ -1,0 +1,8 @@
+{% load i18n %}{% blocktranslate with name=user.get_short_name %}Welcome, {{ name }}{% endblocktranslate %}
+
+{% blocktranslate %}Your {{ brand_name }} account is ready. From today you can order milk, meat, fish, honey and sweets straight from our farm.{% endblocktranslate %}
+
+{% translate "Start shopping:" %} {{ shop_url }}
+
+--
+{{ brand_name }}{% if support_phone %} | {{ support_phone }}{% endif %}{% if support_email %} | {{ support_email }}{% endif %}

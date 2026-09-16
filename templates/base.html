@@ -1,0 +1,68 @@
+{% load static i18n %}<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE|default:'en' }}" class="h-full">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+
+  <title>{% block title %}{{ site_name }} - {{ site_tagline }}{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}{{ site_tagline }} Fresh cow milk, farm chicken, raw honey, beef, sweets and fish from {{ site_name }}.{% endblock %}">
+  <link rel="canonical" href="{{ request.build_absolute_uri }}">
+  {# Account and order pages override this: they must never be indexed. #}
+  <meta name="robots" content="{% block robots %}index, follow{% endblock %}">
+
+  {# --- Social preview --- #}
+  <meta property="og:site_name" content="{{ site_name }}">
+  <meta property="og:title" content="{% block og_title %}{{ site_name }}{% endblock %}">
+  <meta property="og:description" content="{% block og_description %}{{ site_tagline }}{% endblock %}">
+  <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+  {% block og_image %}{% endblock %}
+
+  <link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml">
+
+  {# Fraunces for display, Inter for text - preconnected so the hero does not
+     reflow after first paint. #}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap">
+
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  {% if tailwind_cdn_fallback %}
+    {# Development escape hatch for when `npm run build` has not been run.
+       Never enabled in production - see TAILWIND_CDN_FALLBACK. #}
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+  {% endif %}
+
+  {# htmx from a CDN so there is no vendored binary in the repo. To remove the
+     third-party dependency, drop htmx.min.js into static/js/ and point this at
+     {% templatetag openblock %} static 'js/htmx.min.js' {% templatetag closeblock %}. #}
+  <script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js" defer></script>
+  <script src="{% static 'js/app.js' %}" defer></script>
+  {% block extra_head %}{% endblock %}
+</head>
+
+<body class="flex min-h-full flex-col"
+      hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+
+  <a href="#main" class="skip-link">{% translate "Skip to main content" %}</a>
+
+  {% include "partials/_header.html" %}
+
+  {# Toasts live outside <main> so an HTMX swap of page content cannot wipe
+     them, and so screen readers announce them wherever focus happens to be. #}
+  <div id="toasts"
+       class="pointer-events-none fixed inset-x-0 top-20 z-50 flex flex-col items-center gap-2 px-4"
+       role="status" aria-live="polite">
+    {% include "partials/_messages.html" %}
+  </div>
+
+  <main id="main" class="flex-1 focus:outline-none" tabindex="-1">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% include "partials/_footer.html" %}
+
+  {% block extra_body %}{% endblock %}
+</body>
+</html>

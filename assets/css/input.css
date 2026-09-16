@@ -1,0 +1,216 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==========================================================================
+   XaninFarm base layer
+   ========================================================================== */
+@layer base {
+  :root {
+    --header-height: 4.5rem;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    scroll-behavior: smooth;
+  }
+
+  /* Respect users who ask for less motion. */
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+
+  body {
+    @apply bg-cream-100 font-sans text-charcoal-800 antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display text-charcoal-900;
+    font-variation-settings: 'SOFT' 0, 'WONK' 0;
+  }
+
+  /* A single, visible focus treatment for keyboard users everywhere. */
+  :focus-visible {
+    @apply outline-none ring-2 ring-farm-600 ring-offset-2 ring-offset-cream-100;
+  }
+
+  /* Native form controls inherit the brand instead of the browser default. */
+  [type='text'],
+  [type='email'],
+  [type='password'],
+  [type='tel'],
+  [type='number'],
+  [type='search'],
+  [type='date'],
+  [type='url'],
+  select,
+  textarea {
+    @apply w-full rounded-xl border-charcoal-200 bg-white text-charcoal-900 shadow-sm
+      placeholder:text-charcoal-400 focus:border-farm-600 focus:ring-farm-600;
+  }
+
+  [type='checkbox'],
+  [type='radio'] {
+    @apply border-charcoal-300 text-farm-600 focus:ring-farm-600;
+  }
+}
+
+/* ==========================================================================
+   Components
+   ========================================================================== */
+@layer components {
+  .container-page {
+    @apply mx-auto w-full max-w-8xl px-5 sm:px-8 lg:px-12;
+  }
+
+  /* --- Buttons --- */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm
+      font-semibold tracking-wide transition duration-200 ease-out-soft
+      disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-primary {
+    @apply btn bg-farm-700 text-cream-50 shadow-sm hover:bg-farm-800
+      hover:shadow-card active:scale-[0.98];
+  }
+
+  .btn-secondary {
+    @apply btn border border-charcoal-200 bg-white text-charcoal-800
+      hover:border-farm-600 hover:text-farm-700 active:scale-[0.98];
+  }
+
+  .btn-honey {
+    @apply btn bg-honey-400 text-charcoal-900 shadow-sm hover:bg-honey-300 active:scale-[0.98];
+  }
+
+  .btn-ghost {
+    @apply btn text-charcoal-700 hover:bg-cream-200 hover:text-charcoal-900;
+  }
+
+  .btn-danger {
+    @apply btn bg-red-700 text-white hover:bg-red-800 active:scale-[0.98];
+  }
+
+  .btn-sm {
+    @apply px-4 py-2 text-xs;
+  }
+
+  /* --- Surfaces --- */
+  .card {
+    @apply rounded-2xl border border-charcoal-100 bg-white shadow-card;
+  }
+
+  .surface {
+    @apply rounded-2xl border border-cream-300 bg-cream-50;
+  }
+
+  /* --- Badges --- */
+  .badge {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold;
+  }
+
+  .badge-farm {
+    @apply badge bg-farm-100 text-farm-800;
+  }
+
+  .badge-honey {
+    @apply badge bg-honey-100 text-honey-800;
+  }
+
+  .badge-muted {
+    @apply badge bg-charcoal-100 text-charcoal-600;
+  }
+
+  .badge-danger {
+    @apply badge bg-red-100 text-red-800;
+  }
+
+  /* --- Forms --- */
+  .form-label {
+    @apply mb-1.5 block text-sm font-medium text-charcoal-700;
+  }
+
+  .form-hint {
+    @apply mt-1.5 text-xs text-charcoal-500;
+  }
+
+  .form-error {
+    @apply mt-1.5 flex items-start gap-1 text-xs font-medium text-red-700;
+  }
+
+  .field-invalid {
+    @apply border-red-400 focus:border-red-500 focus:ring-red-500;
+  }
+
+  /* --- Type --- */
+  .eyebrow {
+    @apply text-xs font-semibold uppercase tracking-[0.18em] text-farm-700;
+  }
+
+  /* prose-stone is the typography plugin's warmest neutral theme, which is the
+     closest match to the charcoal ink used everywhere else. The plugin only
+     ships themes for its own greys, so `prose-charcoal` does not exist. */
+  .prose-farm {
+    @apply prose prose-stone max-w-none prose-headings:font-display
+      prose-a:text-farm-700 prose-a:underline-offset-2;
+  }
+
+  /* Screen-reader-only text that becomes visible on focus (skip links). */
+  .skip-link {
+    @apply sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100]
+      focus:rounded-full focus:bg-farm-800 focus:px-5 focus:py-3 focus:text-cream-50;
+  }
+}
+
+/* ==========================================================================
+   Utilities
+   ========================================================================== */
+@layer utilities {
+  /* Subtle paper grain used behind hero sections. */
+  .bg-grain {
+    background-image: radial-gradient(rgba(28, 27, 24, 0.045) 1px, transparent 1px);
+    background-size: 4px 4px;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* HTMX: fade content while a request is in flight. */
+  .htmx-request.htmx-fade,
+  .htmx-request .htmx-fade {
+    @apply pointer-events-none opacity-50 transition-opacity duration-150;
+  }
+
+  /* Only shown while an HTMX request is running. */
+  .htmx-indicator {
+    @apply hidden;
+  }
+
+  .htmx-request .htmx-indicator,
+  .htmx-request.htmx-indicator {
+    @apply inline-flex;
+  }
+}

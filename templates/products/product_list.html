@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+{% load i18n farm_extras %}
+
+{% block title %}
+  {% if active_category %}{{ active_category.name }}
+  {% elif search_term %}{% blocktranslate %}Search: {{ search_term }}{% endblocktranslate %}
+  {% else %}{% translate "Shop" %}{% endif %} - {{ site_name }}
+{% endblock %}
+
+{% block meta_description %}
+  {% if active_category and active_category.seo_description %}{{ active_category.seo_description }}
+  {% elif active_category %}{{ active_category.description }}
+  {% else %}{% translate "Fresh milk, honey, chicken, beef, fish and dairy sweets, delivered from our farm." %}{% endif %}
+{% endblock %}
+
+{% block content %}
+
+  {# --- Page head --- #}
+  <section class="bg-grain border-b border-cream-300 bg-cream-50">
+    <div class="container-page py-12 sm:py-16">
+      <nav aria-label="{% translate 'Breadcrumb' %}" class="text-xs text-charcoal-500">
+        <a href="{% url 'core:home' %}" class="hover:text-farm-700">{% translate "Home" %}</a>
+        <span class="mx-2 text-charcoal-300">/</span>
+        <a href="{% url 'products:list' %}" class="hover:text-farm-700">{% translate "Shop" %}</a>
+        {% if active_category %}
+          <span class="mx-2 text-charcoal-300">/</span>
+          <span class="text-charcoal-700">{{ active_category.name }}</span>
+        {% endif %}
+      </nav>
+
+      <h1 class="mt-4 font-display text-display-sm font-semibold">
+        {% if active_category %}{{ active_category.name }}
+        {% elif search_term %}{% blocktranslate %}Results for &ldquo;{{ search_term }}&rdquo;{% endblocktranslate %}
+        {% else %}{% translate "The whole farm" %}{% endif %}
+      </h1>
+
+      <p class="mt-3 max-w-2xl text-charcoal-600">
+        {% if active_category and active_category.description %}
+          {{ active_category.description }}
+        {% else %}
+          {% translate "Everything we raise, milk, catch and make - priced honestly and packed the day it leaves us." %}
+        {% endif %}
+      </p>
+    </div>
+  </section>
+
+  <div class="container-page grid gap-10 py-12 lg:grid-cols-[17rem_1fr]">
+
+    {# =================================================================== #}
+    {# Filters                                                             #}
+    {# =================================================================== #}
+    <form id="shop-filters"
+          action="{{ request.path }}"
+          method="get"
+          hx-get="{{ request.path }}"
+          hx-target="#product-results"
+          hx-swap="outerHTML"
+          hx-push-url="true"
+          hx-trigger="change, submit"
+          hx-indicator="#results-busy"
+          class="lg:sticky lg:top-24 lg:self-start">
+
+      {# Paging always restarts when the filters change. #}
+      <input type="hidden" name="page" value="1">
+
+      {# Collapsed on mobile, always open from lg up: the `hidden` attribute is
+         what the toggle flips, and the lg:!block class outranks it. #}
+      <button type="button"
+              class="btn-secondary btn-sm mb-4 w-full lg:hidden"
+              data-menu-toggle
+              aria-controls="shop-filters-panel"
+              aria-expanded="false">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 5.25h16.5M6.75 12h10.5m-7.5 6.75h4.5"/>
+        </svg>
+        {% translate "Filter and sort" %}
+      </button>
+
+      <div id="shop-filters-panel" hidden class="card p-5 lg:!block">
+        <h2 class="font-display text-lg font-semibold">{% translate "Filter" %}</h2>
+
+        {# --- Search --- #}
+        <div class="mt-5">
+          <label for="shop-q" class="form-label">{% translate "Search" %}</label>
+          <input type="search" id="shop-q" name="q" value="{{ search_term }}"
+                 placeholder="{% translate 'Milk, honey, fish...' %}" class="!text-sm">
+        </div>
+
+        {# --- Categories --- #}
+        {% if categories %}
+          <fieldset class="mt-6 border-t border-charcoal-100 pt-5">
+            <legend class="form-label !mb-0">{% translate "Category" %}</legend>
+            <ul class="mt-3 space-y-1.5 text-sm">
+              <li>
+                <a href="{% url 'products:list' %}"
+                   class="block rounded-lg px-2 py-1.5 {% if not active_category %}bg-farm-50 font-semibold text-farm-800{% else %}text-charcoal-600 hover:bg-cream-100{% endif %}">
+                  {% translate "All produce" %}
+                </a>
+              </li>
+              {% for category in categories %}
+                <li>
+                  <a href="{{ category.get_absolute_url }}"
+                     class="block rounded-lg px-2 py-1.5 {% if active_category.pk == category.pk %}bg-farm-50 font-semibold text-farm-800{% else %}text-charcoal-600 hover:bg-cream-100{% endif %}">
+                    {{ category.name }}
+                  </a>
+                  {% if category.children.all %}
+                    <ul class="ml-3 mt-1 space-y-1 border-l border-cream-300 pl-3">
+                      {% for child in category.children.all %}
+                        <li>
+                          <a href="{{ child.get_absolute_url }}"
+                             class="block rounded-lg px-2 py-1 text-xs {% if active_category.pk == child.pk %}font-semibold text-farm-800{% else %}text-charcoal-500 hover:text-farm-700{% endif %}">
+                            {{ child.name }}
+                          </a>
+                        </li>
+                      {% endfor %}
+                    </ul>
+                  {% endif %}
+                </li>
+              {% endfor %}
+            </ul>
+          </fieldset>
+        {% endif %}
+
+        {# --- Price --- #}
+        <fieldset class="mt-6 border-t border-charcoal-100 pt-5">
+          <legend class="form-label !mb-0">{% translate "Price" %} ({{ currency_symbol }})</legend>
+          <div class="mt-3 flex items-center gap-2">
+            <label for="min_price" class="sr-only">{% translate "Minimum price" %}</label>
+            <input type="number" id="min_price" name="min_price" min="0" step="1"
+                   value="{{ min_price|default_if_none:'' }}" placeholder="{% translate 'Min' %}"
+                   class="!text-sm">
+            <span class="text-charcoal-400" aria-hidden="true">&ndash;</span>
+            <label for="max_price" class="sr-only">{% translate "Maximum price" %}</label>
+            <input type="number" id="max_price" name="max_price" min="0" step="1"
+                   value="{{ max_price|default_if_none:'' }}" placeholder="{% translate 'Max' %}"
+                   class="!text-sm">
+          </div>
+        </fieldset>
+
+        {# --- Availability --- #}
+        <fieldset class="mt-6 space-y-3 border-t border-charcoal-100 pt-5">
+          <legend class="form-label !mb-0">{% translate "Availability" %}</legend>
+          <label class="mt-3 flex cursor-pointer items-center gap-2.5 text-sm text-charcoal-700">
+            <input type="checkbox" name="in_stock" value="1" class="rounded"
+                   {% if in_stock_only %}checked{% endif %}>
+            {% translate "In stock only" %}
+          </label>
+          <label class="flex cursor-pointer items-center gap-2.5 text-sm text-charcoal-700">
+            <input type="checkbox" name="on_offer" value="1" class="rounded"
+                   {% if on_offer_only %}checked{% endif %}>
+            {% translate "On offer" %}
+          </label>
+        </fieldset>
+
+        {# --- Rating --- #}
+        <fieldset class="mt-6 border-t border-charcoal-100 pt-5">
+          <legend class="form-label !mb-0">{% translate "Customer rating" %}</legend>
+          <div class="mt-3 space-y-2">
+            <label class="flex cursor-pointer items-center gap-2.5 text-sm text-charcoal-700">
+              <input type="radio" name="rating" value="" {% if not min_rating %}checked{% endif %}>
+              {% translate "Any rating" %}
+            </label>
+            {% for value in "543" %}
+              <label class="flex cursor-pointer items-center gap-2.5 text-sm text-charcoal-700">
+                <input type="radio" name="rating" value="{{ value }}"
+                       {% if min_rating == value %}checked{% endif %}>
+                {% star_rating value %}
+                <span>{% translate "and up" %}</span>
+              </label>
+            {% endfor %}
+          </div>
+        </fieldset>
+
+        <noscript>
+          <button type="submit" class="btn-primary btn-sm mt-6 w-full">{% translate "Apply filters" %}</button>
+        </noscript>
+
+        {% if has_active_filters %}
+          <a href="{% url 'products:list' %}" class="btn-ghost btn-sm mt-5 w-full">
+            {% translate "Clear all filters" %}
+          </a>
+        {% endif %}
+      </div>
+    </form>
+
+    {# =================================================================== #}
+    {# Results                                                             #}
+    {# =================================================================== #}
+    <div>
+      <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <p class="text-sm text-charcoal-500" aria-live="polite">
+          {% blocktranslate count counter=result_count %}{{ counter }} product{% plural %}{{ counter }} products{% endblocktranslate %}
+          <span id="results-busy" class="htmx-indicator ml-2 items-center gap-1.5 text-farm-700">
+            <svg class="h-3.5 w-3.5 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"/>
+              <path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v3a5 5 0 0 0-5 5H4Z"/>
+            </svg>
+            {% translate "Updating" %}
+          </span>
+        </p>
+
+        <div class="flex items-center gap-2">
+          <label for="sort" class="text-sm text-charcoal-500">{% translate "Sort" %}</label>
+          {# form="shop-filters" keeps sorting working without JavaScript; the
+             htmx attributes are needed because a change event fired outside the
+             form never reaches the form's own hx-trigger. #}
+          <select id="sort" name="sort" form="shop-filters"
+                  hx-get="{{ request.path }}"
+                  hx-target="#product-results"
+                  hx-swap="outerHTML"
+                  hx-push-url="true"
+                  hx-include="#shop-filters"
+                  hx-indicator="#results-busy"
+                  class="!w-auto !py-2 !text-sm">
+            {% for value, option in sort_options.items %}
+              <option value="{{ value }}" {% if sort == value %}selected{% endif %}>{{ option.0 }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="htmx-fade">
+        {% include "products/partials/_product_results.html" %}
+      </div>
+    </div>
+  </div>
+{% endblock %}

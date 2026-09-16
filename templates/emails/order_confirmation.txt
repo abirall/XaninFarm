@@ -1,0 +1,22 @@
+{% load i18n %}{% translate "Thank you for your order" %}
+{% blocktranslate with number=order.number %}Order {{ number }}{% endblocktranslate %} - {{ order.placed_at|date:"j M Y, g:i a" }}
+
+{% for item in items %}- {{ item.product_name }} ({{ item.variant_name }}) x {{ item.quantity }} = {{ currency }}{{ item.line_total }}
+{% endfor %}
+{% translate "Subtotal" %}: {{ currency }}{{ order.subtotal }}{% if order.discount_amount %}
+{% translate "Discount" %}: -{{ currency }}{{ order.discount_amount }}{% endif %}
+{% translate "Delivery" %}: {% if order.delivery_discount %}{% translate "Free" %}{% else %}{{ currency }}{{ order.delivery_fee }}{% endif %}
+{% translate "Total" %}: {{ currency }}{{ order.total }}
+
+{% translate "Delivering to" %}:
+{{ order.ship_recipient }}
+{% for line in order.shipping_address_lines %}{{ line }}
+{% endfor %}{{ order.ship_phone }}
+
+{% translate "Payment" %}: {{ order.get_payment_method_display }}
+{% if order.requested_delivery_date %}{% translate "Expected" %}: {{ order.requested_delivery_date|date:"l, j F" }}{% if order.delivery_slot %} - {{ order.delivery_slot }}{% endif %}
+{% endif %}
+{% translate "Track this order:" %} {{ track_url }}
+
+--
+{{ brand_name }}{% if support_phone %} | {{ support_phone }}{% endif %}

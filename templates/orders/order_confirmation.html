@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% load i18n farm_extras %}
+
+{% block title %}{% translate "Order confirmed" %} - {{ site_name }}{% endblock %}
+{% block meta_description %}{% translate "Thank you - your farm order is on its way." %}{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
+
+{% block content %}
+  <div class="container-page py-16 sm:py-24">
+    <div class="mx-auto max-w-2xl">
+
+      <div class="animate-scale-in text-center">
+        <span class="mx-auto grid h-16 w-16 place-items-center rounded-full bg-farm-100 text-farm-700">
+          <svg class="h-8 w-8" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5"/>
+          </svg>
+        </span>
+
+        <p class="eyebrow mt-8">{% translate "Order confirmed" %}</p>
+        <h1 class="mt-3 font-display text-display-md font-semibold">{% translate "Thank you!" %}</h1>
+        <p class="mt-4 text-charcoal-600">
+          {% blocktranslate with number=order.number %}Your order <strong>{{ number }}</strong> is in. We have emailed the details to you.{% endblocktranslate %}
+        </p>
+      </div>
+
+      {# --- What happens next --- #}
+      <div class="card mt-12 p-6 sm:p-8">
+        <dl class="grid gap-6 sm:grid-cols-2">
+          <div>
+            <dt class="form-label">{% translate "Order number" %}</dt>
+            <dd class="font-display text-lg font-semibold">{{ order.number }}</dd>
+          </div>
+          <div>
+            <dt class="form-label">{% translate "Total" %}</dt>
+            <dd class="font-display text-lg font-semibold tabular-nums">{{ order.total|taka }}</dd>
+          </div>
+          <div>
+            <dt class="form-label">{% translate "Paying by" %}</dt>
+            <dd class="text-sm text-charcoal-700">
+              {{ order.get_payment_method_display }}
+              {% if order.is_cod %}
+                <span class="mt-0.5 block text-xs text-charcoal-500">
+                  {% blocktranslate with amount=order.balance_due|taka %}Please have {{ amount }} ready for the rider.{% endblocktranslate %}
+                </span>
+              {% endif %}
+            </dd>
+          </div>
+          <div>
+            <dt class="form-label">{% translate "Delivering to" %}</dt>
+            <dd class="text-sm leading-relaxed text-charcoal-700">
+              <span class="block">{{ order.ship_recipient }}</span>
+              <span class="block text-xs text-charcoal-500">{{ order.ship_address_line }}, {{ order.ship_area }}</span>
+            </dd>
+          </div>
+        </dl>
+
+        {% if order.requested_delivery_date or order.delivery_zone %}
+          <p class="mt-6 flex items-start gap-2.5 rounded-xl bg-cream-100 px-4 py-3 text-sm text-charcoal-700">
+            <svg class="mt-0.5 h-4 w-4 shrink-0 text-farm-700" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5h18v7.5"/>
+            </svg>
+            <span>
+              {% if order.requested_delivery_date %}
+                {% blocktranslate with date=order.requested_delivery_date|date:"j F Y" %}Expected on {{ date }}.{% endblocktranslate %}
+              {% else %}
+                {{ order.delivery_zone.estimate_label }}
+              {% endif %}
+              {% if order.delivery_slot %} &middot; {{ order.delivery_slot.label }}{% endif %}
+            </span>
+          </p>
+        {% endif %}
+
+        <div class="mt-8 flex flex-wrap gap-3">
+          <a href="{{ order.get_absolute_url }}" class="btn-primary flex-1 justify-center">
+            {% translate "View your order" %}
+          </a>
+          <a href="{% url 'products:list' %}" class="btn-secondary flex-1 justify-center">
+            {% translate "Keep shopping" %}
+          </a>
+        </div>
+
+        {# The token link is what the emailed one uses, so a customer who is
+           signed out on another device can still follow the order. #}
+        <p class="mt-6 text-center text-xs text-charcoal-400">
+          {% translate "You can also follow it without signing in:" %}
+          <a href="{{ order.get_tracking_url }}" class="font-medium text-farm-700 hover:underline">
+            {% translate "tracking page" %}
+          </a>
+        </p>
+      </div>
+    </div>
+  </div>
+{% endblock %}

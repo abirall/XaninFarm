@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Delivery addresses" %} - {{ site_name }}{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
+
+{% block content %}
+  <div class="container-page py-12 sm:py-16">
+
+    <nav aria-label="{% translate 'Breadcrumb' %}" class="text-xs text-charcoal-500">
+      <a href="{% url 'accounts:profile' %}" class="hover:text-farm-700">{% translate "My account" %}</a>
+      <span class="mx-2 text-charcoal-300">/</span>
+      <span class="text-charcoal-700" aria-current="page">{% translate "Addresses" %}</span>
+    </nav>
+
+    <div class="mt-4 flex flex-wrap items-end justify-between gap-4">
+      <h1 class="font-display text-display-sm font-semibold">{% translate "Delivery addresses" %}</h1>
+      <a href="{% url 'accounts:address_create' %}" class="btn-primary btn-sm">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/>
+        </svg>
+        {% translate "Add an address" %}
+      </a>
+    </div>
+
+    <div class="mt-10 grid gap-8 lg:grid-cols-[16rem_1fr] lg:items-start">
+      <div class="lg:sticky lg:top-24">
+        {% include "accounts/partials/_account_nav.html" with current="addresses" %}
+      </div>
+
+      <div>
+        {% if addresses %}
+          <div class="grid gap-4 sm:grid-cols-2">
+            {% for address in addresses %}
+              <article class="card flex flex-col p-5
+                              {% if address.is_default %}ring-1 ring-farm-600{% endif %}">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="badge-muted">{{ address.get_label_display }}</span>
+                  {% if address.is_default %}<span class="badge-farm">{% translate "Default" %}</span>{% endif %}
+                  {% if address.delivery_zone %}
+                    <span class="badge-honey">{{ address.delivery_zone.name }}</span>
+                  {% endif %}
+                </div>
+
+                <p class="mt-4 font-medium text-charcoal-900">{{ address.recipient_name }}</p>
+                <p class="mt-1 flex-1 text-sm leading-relaxed text-charcoal-600">
+                  {{ address.single_line }}
+                  <span class="mt-1 block text-xs text-charcoal-500">{{ address.phone }}</span>
+                  {% if address.delivery_note %}
+                    <span class="mt-1 block text-xs italic text-charcoal-400">{{ address.delivery_note }}</span>
+                  {% endif %}
+                </p>
+
+                <div class="mt-5 flex flex-wrap items-center gap-2 border-t border-cream-300 pt-4">
+                  <a href="{% url 'accounts:address_edit' address.pk %}" class="btn-secondary btn-sm">
+                    {% translate "Edit" %}
+                  </a>
+
+                  {% if not address.is_default %}
+                    {# POST, not a link: this changes state. #}
+                    <form action="{% url 'accounts:address_make_default' address.pk %}" method="post">
+                      {% csrf_token %}
+                      <button type="submit" class="btn-ghost btn-sm">{% translate "Make default" %}</button>
+                    </form>
+                  {% endif %}
+
+                  <a href="{% url 'accounts:address_delete' address.pk %}"
+                     class="ml-auto text-xs font-medium text-charcoal-400 underline underline-offset-2 hover:text-red-700">
+                    {% translate "Remove" %}
+                  </a>
+                </div>
+              </article>
+            {% endfor %}
+          </div>
+
+          <p class="mt-6 text-xs text-charcoal-400">
+            {% translate "Editing an address never changes an order you have already placed — we save a copy of the address with each order." %}
+          </p>
+
+        {% else %}
+          <div class="surface flex flex-col items-center px-8 py-20 text-center">
+            <span class="grid h-16 w-16 place-items-center rounded-full bg-cream-200 text-charcoal-400">
+              <svg class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.1-7.5 11.25-7.5 11.25S4.5 17.6 4.5 10.5a7.5 7.5 0 0 1 15 0Z"/>
+              </svg>
+            </span>
+            <h2 class="mt-6 font-display text-2xl font-semibold">{% translate "No addresses saved" %}</h2>
+            <p class="mt-2 max-w-sm text-sm text-charcoal-500">
+              {% translate "Save where you would like your milk and meat delivered, and checkout becomes a single step." %}
+            </p>
+            <a href="{% url 'accounts:address_create' %}" class="btn-primary mt-8">
+              {% translate "Add your first address" %}
+            </a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endblock %}

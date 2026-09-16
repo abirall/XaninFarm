@@ -1,0 +1,128 @@
+{% load i18n farm_extras %}
+{#
+  Checkout totals, re-priced by the server whenever the chosen address changes.
+
+  The delivery fee, the minimum order and the slots on offer all follow from
+  the zone, so this fragment is the only place they are rendered. Nothing here
+  is computed in the browser.
+  Context: quote, zone, slots.
+#}
+<div id="checkout-summary" class="htmx-fade card p-6 lg:sticky lg:top-24">
+  <h2 class="font-display text-lg font-semibold">{% translate "Your order" %}</h2>
+
+  {# --- Lines --- #}
+  <ul class="mt-5 space-y-4 border-b border-cream-300 pb-5">
+    {% for item in quote.items %}
+      <li class="flex items-start gap-3 text-sm">
+        <span class="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-cream-200 text-xs font-bold text-charcoal-700 tabular-nums">
+          {{ item.quantity }}
+        </span>
+        <span class="min-w-0 flex-1">
+          <span class="block truncate font-medium text-charcoal-800">{{ item.variant.product.name }}</span>
+          <span class="block text-xs text-charcoal-500">{{ item.variant.name }}</span>
+        </span>
+        <span class="shrink-0 font-medium tabular-nums">{{ item.line_total|taka }}</span>
+      </li>
+    {% endfor %}
+  </ul>
+
+  {# --- Delivery window ---
+     Rendered here because which slots exist depends on the zone. The
+     form="checkout-form" attribute submits it with the main form. #}
+  {% if slots %}
+    <div class="border-b border-cream-300 py-5">
+      <label for="delivery_slot" class="form-label">{% translate "Preferred time" %}</label>
+      <select id="delivery_slot" name="delivery_slot" form="checkout-form" class="!text-sm">
+        <option value="">{% translate "Any time" %}</option>
+        {% for slot in slots %}
+          <option value="{{ slot.pk }}" {% if request.POST.delivery_slot == slot.pk|stringformat:"s" %}selected{% endif %}>
+            {{ slot.label }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+  {% endif %}
+
+  {# --- Totals --- #}
+  <dl class="mt-5 space-y-3 text-sm">
+    <div class="flex justify-between">
+      <dt class="text-charcoal-600">{% translate "Subtotal" %}</dt>
+      <dd class="font-medium tabular-nums">{{ quote.subtotal|taka }}</dd>
+    </div>
+
+    {% if quote.discount %}
+      <div class="flex justify-between text-farm-700">
+        <dt>
+          {% translate "Discount" %}
+          {% if quote.coupon %}<span class="text-xs">({{ quote.coupon.code }})</span>{% endif %}
+        </dt>
+        <dd class="font-medium tabular-nums">&minus;{{ quote.discount|taka }}</dd>
+      </div>
+    {% endif %}
+
+    <div class="flex justify-between">
+      <dt class="text-charcoal-600">
+        {% translate "Delivery" %}
+        {% if zone %}<span class="block text-xs text-charcoal-400">{{ zone.name }} &middot; {{ zone.estimate_label }}</span>{% endif %}
+      </dt>
+      <dd class="font-medium tabular-nums">
+        {% if quote.has_free_delivery %}
+          <span class="text-farm-700">{% translate "Free" %}</span>
+        {% else %}
+          {{ quote.delivery_fee|taka }}
+        {% endif %}
+      </dd>
+    </div>
+
+    {% if quote.delivery_discount %}
+      <div class="flex justify-between text-farm-700">
+        <dt>{% translate "Delivery discount" %}</dt>
+        <dd class="font-medium tabular-nums">&minus;{{ quote.delivery_discount|taka }}</dd>
+      </div>
+    {% endif %}
+
+    <div class="flex justify-between border-t border-cream-300 pt-3 text-base">
+      <dt class="font-display font-semibold">{% translate "Total" %}</dt>
+      <dd class="font-display font-semibold tabular-nums">{{ quote.total|taka }}</dd>
+    </div>
+  </dl>
+
+  {% if quote.savings %}
+    <p class="mt-3 rounded-xl bg-honey-50 px-3 py-2 text-xs font-medium text-honey-900">
+      {% blocktranslate with saved=quote.savings|taka %}You are saving {{ saved }} on this order.{% endblocktranslate %}
+    </p>
+  {% endif %}
+
+  {# --- Blockers --- #}
+  {% if quote.stock_issues %}
+    <div class="mt-5 rounded-xl bg-red-50 px-3 py-2.5 text-xs text-red-800" role="alert">
+      <p class="font-semibold">{% translate "Some items need attention" %}</p>
+      <ul class="mt-1.5 space-y-1">
+        {% for issue in quote.stock_issues %}<li>{{ issue.message }}</li>{% endfor %}
+      </ul>
+      <a href="{% url 'cart:detail' %}" class="mt-2 inline-block font-semibold underline">
+        {% translate "Edit basket" %}
+      </a>
+    </div>
+  {% elif not quote.meets_minimum %}
+    <p class="mt-5 rounded-xl bg-honey-50 px-3 py-2.5 text-xs text-honey-900" role="alert">
+      {% blocktranslate with minimum=quote.min_order_amount|taka %}Orders start at {{ minimum }} in this delivery area.{% endblocktranslate %}
+    </p>
+  {% endif %}
+
+  {% if not quote.cod_available %}
+    <p class="mt-3 text-xs text-charcoal-500">
+      {% translate "Cash on delivery is not available for this address." %}
+    </p>
+  {% endif %}
+
+  <button type="submit" form="checkout-form"
+          class="btn-primary mt-6 w-full !py-3.5"
+          {% if not quote.is_checkoutable %}disabled aria-disabled="true"{% endif %}>
+    {% translate "Place order" %}
+  </button>
+
+  <p class="mt-4 text-center text-xs text-charcoal-400">
+    {% translate "You will see the final amount before anything is charged." %}
+  </p>
+</div>

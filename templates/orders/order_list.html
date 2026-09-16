@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% load i18n farm_extras %}
+
+{% block title %}{% translate "My orders" %} - {{ site_name }}{% endblock %}
+{% block meta_description %}{% translate "Track your XaninFarm orders and reorder your favourites." %}{% endblock %}
+
+{% block content %}
+  <div class="container-page py-12 sm:py-16">
+
+    <div class="flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <p class="eyebrow">{% translate "Your account" %}</p>
+        <h1 class="mt-2 font-display text-display-sm font-semibold">{% translate "My orders" %}</h1>
+      </div>
+      <a href="{% url 'accounts:profile' %}" class="btn-ghost btn-sm">{% translate "Back to profile" %}</a>
+    </div>
+
+    {% if orders %}
+      <div class="mt-10 space-y-5">
+        {% for order in orders %}
+          <article class="card p-5 sm:p-6">
+
+            <div class="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
+              <div>
+                <h2 class="font-display text-lg font-semibold">
+                  <a href="{{ order.get_absolute_url }}" class="hover:text-farm-700">{{ order.number }}</a>
+                </h2>
+                <p class="mt-1 text-xs text-charcoal-500">
+                  <time datetime="{{ order.placed_at|date:'c' }}">{{ order.placed_at|date:"j F Y, g:i a" }}</time>
+                </p>
+              </div>
+              {% include "orders/partials/_order_status.html" %}
+            </div>
+
+            {# Names come from the frozen line snapshots, never a live product
+               lookup: the list view does not prefetch that far, and an order
+               must keep showing what was actually bought. #}
+            <ul class="mt-5 space-y-1.5 border-t border-cream-300 pt-5 text-sm">
+              {% for item in order.items.all|slice:":3" %}
+                <li class="flex items-baseline gap-2 text-charcoal-700">
+                  <span class="text-xs font-semibold tabular-nums text-charcoal-400">{{ item.quantity }}&times;</span>
+                  <span class="min-w-0 flex-1 truncate">{{ item.display_name }}</span>
+                  <span class="shrink-0 text-xs tabular-nums text-charcoal-500">{{ item.line_total|taka }}</span>
+                </li>
+              {% endfor %}
+              {% if order.items.all|length > 3 %}
+                <li class="pt-1 text-xs text-charcoal-400">
+                  {% with extra=order.items.all|length|add:"-3" %}
+                    {% blocktranslate count counter=extra %}and {{ counter }} more item{% plural %}and {{ counter }} more items{% endblocktranslate %}
+                  {% endwith %}
+                </li>
+              {% endif %}
+            </ul>
+
+            <div class="mt-5 flex flex-wrap items-center justify-between gap-4 border-t border-cream-300 pt-5">
+              <p class="text-sm text-charcoal-600">
+                {% translate "Total" %}
+                <span class="ml-1 font-display text-base font-semibold text-charcoal-900 tabular-nums">{{ order.total|taka }}</span>
+              </p>
+
+              <div class="flex flex-wrap items-center gap-2">
+                <form action="{% url 'orders:reorder' order.number %}" method="post">
+                  {% csrf_token %}
+                  <button type="submit" class="btn-secondary btn-sm">{% translate "Buy again" %}</button>
+                </form>
+                <a href="{{ order.get_absolute_url }}" class="btn-primary btn-sm">
+                  {% translate "View order" %}
+                </a>
+              </div>
+            </div>
+          </article>
+        {% endfor %}
+      </div>
+
+      {% include "partials/_pagination.html" %}
+
+    {% else %}
+      <div class="surface mt-10 flex flex-col items-center px-8 py-20 text-center">
+        <span class="grid h-16 w-16 place-items-center rounded-full bg-cream-200 text-charcoal-400">
+          <svg class="h-7 w-7" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5 12 12m0 0L3.75 7.5M12 12v9.75m8.25-4.5V6.75L12 2.25 3.75 6.75v10.5L12 21.75l8.25-4.5Z"/>
+          </svg>
+        </span>
+        <h2 class="mt-6 font-display text-2xl font-semibold">{% translate "No orders yet" %}</h2>
+        <p class="mt-2 max-w-sm text-sm text-charcoal-500">
+          {% translate "When you place your first order it will show up here, with live tracking from our farm to your door." %}
+        </p>
+        <a href="{% url 'products:list' %}" class="btn-primary mt-8">{% translate "Start shopping" %}</a>
+      </div>
+    {% endif %}
+  </div>
+{% endblock %}

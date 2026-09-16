@@ -1,0 +1,196 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load i18n farm_extras %}
+
+{% block title %}{% translate "Dashboard" %} - {{ site_name }}{% endblock %}
+{% block dash_title %}{% translate "Overview" %}{% endblock %}
+
+{% block dash_sidebar %}
+  {% include "dashboard/partials/_sidebar.html" with current="home" %}
+{% endblock %}
+
+{% block dash_content %}
+  {# --- Headline numbers --- #}
+  <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div class="card p-5">
+      <p class="form-label">{% blocktranslate with days=summary.days %}Revenue / {{ days }} days{% endblocktranslate %}</p>
+      <p class="font-display text-2xl font-semibold tabular-nums">{{ summary.revenue|taka }}</p>
+      {% if summary.revenue_change is not None %}
+        <p class="mt-1 text-xs {% if summary.revenue_change >= 0 %}text-farm-700{% else %}text-red-700{% endif %}">
+          {% if summary.revenue_change >= 0 %}&uarr;{% else %}&darr;{% endif %}
+          {{ summary.revenue_change }}% {% translate "vs previous period" %}
+        </p>
+      {% endif %}
+    </div>
+
+    <div class="card p-5">
+      <p class="form-label">{% translate "Orders" %}</p>
+      <p class="font-display text-2xl font-semibold tabular-nums">{{ summary.orders }}</p>
+      {% if summary.orders_change is not None %}
+        <p class="mt-1 text-xs {% if summary.orders_change >= 0 %}text-farm-700{% else %}text-red-700{% endif %}">
+          {% if summary.orders_change >= 0 %}&uarr;{% else %}&darr;{% endif %}
+          {{ summary.orders_change }}%
+        </p>
+      {% endif %}
+    </div>
+
+    <div class="card p-5">
+      <p class="form-label">{% translate "Average order" %}</p>
+      <p class="font-display text-2xl font-semibold tabular-nums">{{ summary.average_order_value|taka }}</p>
+      <p class="mt-1 text-xs text-charcoal-400">
+        {% blocktranslate with items=summary.items %}{{ items }} items sold{% endblocktranslate %}
+      </p>
+    </div>
+
+    <div class="card p-5">
+      <p class="form-label">{% translate "Cash to collect" %}</p>
+      <p class="font-display text-2xl font-semibold tabular-nums">{{ outstanding_cash|taka }}</p>
+      <p class="mt-1 text-xs text-charcoal-400">{% translate "COD not yet settled" %}</p>
+    </div>
+  </div>
+
+  {# --- Fourteen-day trend ---
+     A pure-CSS bar chart. Each bar's height is a percentage of the busiest day,
+     so it needs no chart library and no client-side computation. #}
+  {% if series %}
+    <section class="card mt-6 p-5" aria-labelledby="trend-heading">
+      <h2 id="trend-heading" class="font-display text-base font-semibold">
+        {% translate "Last 14 days" %}
+      </h2>
+
+      {# peak_revenue is computed in the view and floored at 1, so widthratio
+         never divides by zero on a period with no trade. #}
+      <div class="mt-5 flex h-36 items-end gap-1">
+        {% for day in series %}
+          <div class="group relative flex h-full flex-1 flex-col justify-end">
+            <div class="min-h-px rounded-t bg-farm-500 transition group-hover:bg-farm-600"
+                 style="height:{% widthratio day.revenue peak_revenue 100 %}%"></div>
+            <span class="sr-only">{{ day.date|date:"j M" }}: {{ day.revenue|taka }}</span>
+            <span class="pointer-events-none absolute -top-7 left-1/2 hidden -translate-x-1/2 whitespace-nowrap rounded bg-charcoal-900 px-2 py-1 text-[10px] text-white group-hover:block">
+              {{ day.date|date:"j M" }} &middot; {{ day.revenue|taka_short }}
+            </span>
+          </div>
+        {% endfor %}
+      </div>
+
+      <div class="mt-2 flex justify-between text-[10px] text-charcoal-400">
+        <span>{{ series.0.date|date:"j M" }}</span>
+        {% with latest=series|last %}<span>{{ latest.date|date:"j M" }}</span>{% endwith %}
+      </div>
+    </section>
+  {% endif %}
+
+  <div class="mt-6 grid gap-6 xl:grid-cols-2">
+
+    {# --- Work queue --- #}
+    <section class="card p-5" aria-labelledby="queue-heading">
+      <div class="flex items-center justify-between">
+        <h2 id="queue-heading" class="font-display text-base font-semibold">
+          {% translate "Needs attention" %}
+        </h2>
+        <a href="{% url 'dashboard:orders' %}" class="text-xs font-medium text-farm-700 hover:underline">
+          {% translate "All orders" %}
+        </a>
+      </div>
+
+      {% if action_needed %}
+        <ul class="mt-4 divide-y divide-cream-300">
+          {% for order in action_needed %}
+            <li class="flex items-center justify-between gap-3 py-2.5 first:pt-0">
+              <div class="min-w-0">
+                <a href="{% url 'dashboard:order_detail' order.number %}"
+                   class="font-medium text-charcoal-900 hover:text-farm-700">{{ order.number }}</a>
+                <p class="text-xs text-charcoal-500">
+                  {{ order.ship_recipient }} &middot; {{ order.placed_at|timesince }} {% translate "ago" %}
+                </p>
+              </div>
+              <div class="flex shrink-0 items-center gap-2">
+                <span class="badge-muted">{{ order.get_status_display }}</span>
+                <span class="text-sm font-semibold tabular-nums">{{ order.total|taka_short }}</span>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="mt-4 text-sm text-charcoal-500">{% translate "Nothing waiting. All caught up." %}</p>
+      {% endif %}
+    </section>
+
+    {# --- Expiring --- #}
+    <section class="card p-5" aria-labelledby="expiry-heading">
+      <div class="flex items-center justify-between">
+        <h2 id="expiry-heading" class="font-display text-base font-semibold">
+          {% translate "Expiring soon" %}
+        </h2>
+        <a href="{% url 'dashboard:inventory' %}" class="text-xs font-medium text-farm-700 hover:underline">
+          {% translate "Inventory" %}
+        </a>
+      </div>
+
+      {% if expiring %}
+        <ul class="mt-4 divide-y divide-cream-300">
+          {% for batch in expiring %}
+            <li class="flex items-center justify-between gap-3 py-2.5 first:pt-0">
+              <div class="min-w-0">
+                <a href="{% url 'dashboard:batch_detail' batch.pk %}"
+                   class="truncate font-medium text-charcoal-900 hover:text-farm-700">
+                  {{ batch.variant.product.name }}
+                </a>
+                <p class="text-xs text-charcoal-500">
+                  {{ batch.batch_number }} &middot; {{ batch.quantity_available|quantity }} {% translate "available" %}
+                </p>
+              </div>
+              {% include "dashboard/partials/_expiry_badge.html" %}
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="mt-4 text-sm text-charcoal-500">{% translate "Nothing expiring in the alert window." %}</p>
+      {% endif %}
+    </section>
+
+    {# --- Low stock --- #}
+    <section class="card p-5" aria-labelledby="low-heading">
+      <h2 id="low-heading" class="font-display text-base font-semibold">{% translate "Running low" %}</h2>
+
+      {% if low_stock %}
+        <ul class="mt-4 divide-y divide-cream-300">
+          {% for row in low_stock %}
+            <li class="flex items-center justify-between gap-3 py-2.5 first:pt-0">
+              <div class="min-w-0">
+                <p class="truncate font-medium text-charcoal-900">{{ row.variant.product.name }}</p>
+                <p class="text-xs text-charcoal-500">{{ row.variant.name }} &middot; {{ row.variant.sku }}</p>
+              </div>
+              <span class="badge {% if row.available <= 0 %}bg-red-100 text-red-800{% else %}bg-honey-100 text-honey-900{% endif %}">
+                {{ row.available|quantity }}
+              </span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="mt-4 text-sm text-charcoal-500">{% translate "Every active pack is above the threshold." %}</p>
+      {% endif %}
+    </section>
+
+    {# --- People --- #}
+    <section class="card p-5" aria-labelledby="people-heading">
+      <h2 id="people-heading" class="font-display text-base font-semibold">{% translate "Customers" %}</h2>
+      <dl class="mt-4 grid grid-cols-3 gap-4 text-center">
+        <div>
+          <dt class="form-label">{% translate "Total" %}</dt>
+          <dd class="font-display text-xl font-semibold tabular-nums">{{ customers.total }}</dd>
+        </div>
+        <div>
+          <dt class="form-label">{% translate "New" %}</dt>
+          <dd class="font-display text-xl font-semibold tabular-nums">{{ customers.new }}</dd>
+        </div>
+        <div>
+          <dt class="form-label">{% translate "Ordered" %}</dt>
+          <dd class="font-display text-xl font-semibold tabular-nums">{{ customers.active }}</dd>
+        </div>
+      </dl>
+      <a href="{% url 'dashboard:customers' %}" class="btn-ghost btn-sm mt-4 w-full">
+        {% translate "Customer list" %}
+      </a>
+    </section>
+  </div>
+{% endblock %}

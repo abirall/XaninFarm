@@ -1,0 +1,65 @@
+{% load i18n farm_extras %}
+{#
+  Pagination for any ListView with paginate_by. Preserves the current filters
+  by rebuilding the query string instead of linking to a bare ?page=N.
+  Optional: target="#product-results" to page via HTMX.
+#}
+{% if page_obj.has_other_pages %}
+  <nav class="mt-12 flex items-center justify-center gap-1.5" aria-label="{% translate 'Pagination' %}">
+
+    {% if page_obj.has_previous %}
+      <a href="?{% query_replace page=page_obj.previous_page_number %}"
+         {% if target %}hx-get="?{% query_replace page=page_obj.previous_page_number %}" hx-target="{{ target }}" hx-swap="outerHTML" hx-push-url="true"{% endif %}
+         class="btn-secondary btn-sm !rounded-full !px-3.5">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5"/>
+        </svg>
+        <span class="sr-only">{% translate "Previous page" %}</span>
+      </a>
+    {% else %}
+      <span class="btn-secondary btn-sm !rounded-full !px-3.5 opacity-40" aria-hidden="true">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5"/>
+        </svg>
+      </span>
+    {% endif %}
+
+    {% for number in paginator.page_range %}
+      {% if number == page_obj.number %}
+        <span aria-current="page"
+              class="grid h-10 min-w-10 place-items-center rounded-full bg-farm-700 px-3 text-sm font-semibold text-cream-50">
+          {{ number }}
+        </span>
+      {% elif number == 1 or number == paginator.num_pages or number > page_obj.number|add:"-3" and number < page_obj.number|add:"3" %}
+        <a href="?{% query_replace page=number %}"
+           {% if target %}hx-get="?{% query_replace page=number %}" hx-target="{{ target }}" hx-swap="outerHTML" hx-push-url="true"{% endif %}
+           class="grid h-10 min-w-10 place-items-center rounded-full px-3 text-sm font-medium text-charcoal-700 hover:bg-cream-200">
+          <span class="sr-only">{% translate "Page" %}</span>{{ number }}
+        </a>
+      {% elif number == page_obj.number|add:"-3" or number == page_obj.number|add:"3" %}
+        <span class="px-1 text-charcoal-400" aria-hidden="true">&hellip;</span>
+      {% endif %}
+    {% endfor %}
+
+    {% if page_obj.has_next %}
+      <a href="?{% query_replace page=page_obj.next_page_number %}"
+         {% if target %}hx-get="?{% query_replace page=page_obj.next_page_number %}" hx-target="{{ target }}" hx-swap="outerHTML" hx-push-url="true"{% endif %}
+         class="btn-secondary btn-sm !rounded-full !px-3.5">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5"/>
+        </svg>
+        <span class="sr-only">{% translate "Next page" %}</span>
+      </a>
+    {% else %}
+      <span class="btn-secondary btn-sm !rounded-full !px-3.5 opacity-40" aria-hidden="true">
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5"/>
+        </svg>
+      </span>
+    {% endif %}
+  </nav>
+
+  <p class="mt-4 text-center text-xs text-charcoal-500">
+    {% blocktranslate with current=page_obj.number total=paginator.num_pages %}Page {{ current }} of {{ total }}{% endblocktranslate %}
+  </p>
+{% endif %}

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Edit your details" %} - {{ site_name }}{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
+
+{% block content %}
+  <div class="container-page py-12 sm:py-16">
+
+    <nav aria-label="{% translate 'Breadcrumb' %}" class="text-xs text-charcoal-500">
+      <a href="{% url 'accounts:profile' %}" class="hover:text-farm-700">{% translate "My account" %}</a>
+      <span class="mx-2 text-charcoal-300">/</span>
+      <span class="text-charcoal-700" aria-current="page">{% translate "Your details" %}</span>
+    </nav>
+
+    <h1 class="mt-4 font-display text-display-sm font-semibold">{% translate "Your details" %}</h1>
+
+    <div class="mt-10 grid gap-8 lg:grid-cols-[16rem_1fr] lg:items-start">
+      <div class="lg:sticky lg:top-24">
+        {% include "accounts/partials/_account_nav.html" with current="profile" %}
+      </div>
+
+      <div class="max-w-xl">
+        <form method="post" class="card space-y-5 p-6 sm:p-8">
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+            <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+              {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+            </div>
+          {% endif %}
+
+          {% include "partials/_field.html" with field=form.full_name %}
+          {% include "partials/_field.html" with field=form.phone %}
+
+          {# Email is the login identifier, so it is shown but not editable
+             here: changing it needs a verification round-trip. #}
+          <div>
+            <span class="form-label">{% translate "Email" %}</span>
+            <p class="rounded-xl bg-cream-100 px-3.5 py-2.5 text-sm text-charcoal-600">{{ user.email }}</p>
+            <p class="form-hint">{% translate "Contact us if you need to change the email on your account." %}</p>
+          </div>
+
+          <div class="border-t border-cream-300 pt-5">
+            {% include "partials/_field.html" with field=form.marketing_opt_in %}
+          </div>
+
+          <div class="flex flex-wrap gap-3 pt-1">
+            <button type="submit" class="btn-primary">{% translate "Save changes" %}</button>
+            <a href="{% url 'accounts:profile' %}" class="btn-ghost">{% translate "Cancel" %}</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}

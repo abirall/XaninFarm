@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Remove address" %} - {{ site_name }}{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
+
+{% block content %}
+  <div class="container-page flex justify-center py-16 sm:py-24">
+    <div class="w-full max-w-lg">
+
+      <div class="text-center">
+        <span class="mx-auto grid h-14 w-14 place-items-center rounded-full bg-red-50 text-red-700">
+          <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v4.5m0 3.5h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+          </svg>
+        </span>
+        <h1 class="mt-6 font-display text-display-sm font-semibold">{% translate "Remove this address?" %}</h1>
+      </div>
+
+      <div class="card mt-8 p-6 sm:p-8">
+        <p class="text-sm leading-relaxed text-charcoal-700">
+          <span class="block font-medium text-charcoal-900">{{ object.recipient_name }}</span>
+          {{ object.single_line }}
+          <span class="mt-1 block text-xs text-charcoal-500">{{ object.phone }}</span>
+        </p>
+
+        {# Orders keep their own copy of the address, so removing it here has no
+           effect on delivery history. Worth saying, because customers assume
+           otherwise. #}
+        <p class="mt-5 rounded-xl bg-cream-100 px-4 py-3 text-xs text-charcoal-600">
+          {% translate "Your past orders keep their own copy of this address, so none of your order history changes." %}
+          {% if object.is_default %}
+            {% translate "Another saved address will become your default." %}
+          {% endif %}
+        </p>
+
+        <form method="post" class="mt-7 flex flex-wrap gap-3">
+          {% csrf_token %}
+          <button type="submit" class="btn-primary !bg-red-700 hover:!bg-red-800">
+            {% translate "Yes, remove it" %}
+          </button>
+          <a href="{% url 'accounts:address_list' %}" class="btn-ghost">{% translate "Keep it" %}</a>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}

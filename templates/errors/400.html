@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Bad request" %} - {{ site_name }}{% endblock %}
+
+{% block content %}
+  <section class="container-page flex min-h-[60vh] flex-col items-center justify-center py-24 text-center">
+    <p class="eyebrow">{% translate "Error 400" %}</p>
+    <h1 class="mt-4 max-w-2xl text-balance font-display text-display-sm font-semibold sm:text-display-md">
+      {% translate "We could not read that request" %}
+    </h1>
+    <p class="mt-5 max-w-lg text-charcoal-500">
+      {% translate "Something in the address or the form was malformed. Please try again from the shop." %}
+    </p>
+    <div class="mt-9">
+      <a href="{% url 'core:home' %}" class="btn-primary">{% translate "Back to the farm" %}</a>
+    </div>
+  </section>
+{% endblock %}

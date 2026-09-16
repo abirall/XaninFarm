@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Your basket" %} - {{ site_name }}{% endblock %}
+{% block meta_description %}{% translate "Review your basket and check out." %}{% endblock %}
+
+{% block content %}
+  <div class="container-page py-12 sm:py-16">
+    <p class="eyebrow">{{ site_tagline }}</p>
+    <h1 class="mt-3 font-display text-display-sm font-semibold">{% translate "Your basket" %}</h1>
+
+    <div class="mt-10">
+      {% include "cart/partials/_cart_panel.html" %}
+    </div>
+  </div>
+{% endblock %}

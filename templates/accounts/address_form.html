@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{# Shared by AddressCreateView and AddressUpdateView: `object` is only set on
+   the edit path, which is what distinguishes the two. #}
+{% block title %}
+  {% if object %}{% translate "Edit address" %}{% else %}{% translate "Add an address" %}{% endif %} - {{ site_name }}
+{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
+
+{% block content %}
+  <div class="container-page py-12 sm:py-16">
+
+    <nav aria-label="{% translate 'Breadcrumb' %}" class="text-xs text-charcoal-500">
+      <a href="{% url 'accounts:profile' %}" class="hover:text-farm-700">{% translate "My account" %}</a>
+      <span class="mx-2 text-charcoal-300">/</span>
+      <a href="{% url 'accounts:address_list' %}" class="hover:text-farm-700">{% translate "Addresses" %}</a>
+      <span class="mx-2 text-charcoal-300">/</span>
+      <span class="text-charcoal-700" aria-current="page">
+        {% if object %}{% translate "Edit" %}{% else %}{% translate "New" %}{% endif %}
+      </span>
+    </nav>
+
+    <h1 class="mt-4 font-display text-display-sm font-semibold">
+      {% if object %}{% translate "Edit address" %}{% else %}{% translate "Add an address" %}{% endif %}
+    </h1>
+
+    <div class="mt-10 max-w-2xl">
+      <form method="post" class="card space-y-6 p-6 sm:p-8">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+          <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+            {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+          </div>
+        {% endif %}
+
+        {% include "partials/_field.html" with field=form.label %}
+
+        <div class="grid gap-5 sm:grid-cols-2">
+          {% include "partials/_field.html" with field=form.recipient_name %}
+          {% include "partials/_field.html" with field=form.phone hint=_("The rider will call this number.") %}
+        </div>
+
+        {% include "partials/_field.html" with field=form.alternate_phone %}
+
+        <div class="grid gap-5 border-t border-cream-300 pt-6 sm:grid-cols-2">
+          {% include "partials/_field.html" with field=form.division %}
+          {% include "partials/_field.html" with field=form.district %}
+          {% include "partials/_field.html" with field=form.area %}
+          {% include "partials/_field.html" with field=form.postcode %}
+        </div>
+
+        {% include "partials/_field.html" with field=form.address_line %}
+        {% include "partials/_field.html" with field=form.delivery_note %}
+
+        {# The area and district decide the delivery zone, which decides the
+           fee and the minimum order. The form resolves it on save; nothing is
+           asked of the customer. #}
+        <div class="border-t border-cream-300 pt-6">
+          {# _field.html renders this field's help text itself, including the
+             "already your default" note the form sets when it disables it. #}
+          {% include "partials/_field.html" with field=form.set_as_default %}
+        </div>
+
+        <div class="flex flex-wrap gap-3">
+          <button type="submit" class="btn-primary">
+            {% if object %}{% translate "Save changes" %}{% else %}{% translate "Save address" %}{% endif %}
+          </button>
+          <a href="{% url 'accounts:address_list' %}" class="btn-ghost">{% translate "Cancel" %}</a>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}

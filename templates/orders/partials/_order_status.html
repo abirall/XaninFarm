@@ -1,0 +1,26 @@
+{% load i18n %}
+{#
+  Order and payment status pills.
+
+  Two separate badges on purpose: an order can be out for delivery while the
+  money is still pending (cash on delivery), and a prepaid order can be paid
+  before it is packed. Never collapse these into one label.
+  Context: order.
+#}
+<span class="flex flex-wrap items-center gap-2">
+  <span class="badge
+    {% if order.status == 'delivered' %}bg-farm-100 text-farm-800
+    {% elif order.status == 'cancelled' or order.status == 'returned' %}bg-red-100 text-red-800
+    {% elif order.status == 'out_for_delivery' %}bg-honey-100 text-honey-900
+    {% else %}bg-cream-200 text-charcoal-700{% endif %}">
+    {{ order.get_status_display }}
+  </span>
+
+  <span class="badge
+    {% if order.payment_status == 'paid' %}bg-farm-100 text-farm-800
+    {% elif order.payment_status == 'failed' or order.payment_status == 'cancelled' %}bg-red-100 text-red-800
+    {% elif order.payment_status == 'refunded' or order.payment_status == 'partially_refunded' %}bg-charcoal-100 text-charcoal-700
+    {% else %}bg-honey-100 text-honey-900{% endif %}">
+    {{ order.get_payment_status_display }}
+  </span>
+</span>

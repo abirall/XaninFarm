@@ -1,0 +1,32 @@
+{% load i18n %}
+{# Toast list. Included by base.html and re-rendered by HTMX partials, so it
+   must be safe to render more than once per page. #}
+{% for message in messages %}
+  <div class="pointer-events-auto flex w-full max-w-md animate-fade-up items-start gap-3 rounded-2xl
+              border px-4 py-3 text-sm shadow-card-hover
+              {% if message.level_tag == 'error' %}border-red-200 bg-red-50 text-red-900
+              {% elif message.level_tag == 'warning' %}border-honey-200 bg-honey-50 text-honey-900
+              {% elif message.level_tag == 'success' %}border-farm-200 bg-farm-50 text-farm-900
+              {% else %}border-charcoal-200 bg-white text-charcoal-800{% endif %}"
+       data-toast>
+    <span class="mt-0.5 shrink-0" aria-hidden="true">
+      {% if message.level_tag == 'error' %}
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m0 3.5h.01M10.3 3.9 2.4 17.6A1.9 1.9 0 0 0 4 20.5h16a1.9 1.9 0 0 0 1.6-2.9L13.7 3.9a1.9 1.9 0 0 0-3.4 0Z"/></svg>
+      {% elif message.level_tag == 'warning' %}
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4.5m0 3.5h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+      {% elif message.level_tag == 'success' %}
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m8.5 12.5 2.5 2.5 4.5-5.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+      {% else %}
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-4.5m0-3.5h.01M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+      {% endif %}
+    </span>
+    <p class="flex-1">{{ message }}</p>
+    <button type="button" data-toast-dismiss
+            class="-mr-1 -mt-1 rounded-full p-1 opacity-60 transition hover:bg-black/5 hover:opacity-100">
+      <span class="sr-only">{% translate "Dismiss" %}</span>
+      <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/>
+      </svg>
+    </button>
+  </div>
+{% endfor %}

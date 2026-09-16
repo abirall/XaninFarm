@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Page not found" %} - {{ site_name }}{% endblock %}
+
+{% block content %}
+  <section class="container-page flex min-h-[60vh] flex-col items-center justify-center py-24 text-center">
+    <p class="eyebrow">{% translate "Error 404" %}</p>
+    <h1 class="mt-4 max-w-2xl text-balance font-display text-display-sm font-semibold sm:text-display-md">
+      {% translate "This field is empty" %}
+    </h1>
+    <p class="mt-5 max-w-lg text-charcoal-500">
+      {% translate "We could not find the page you were looking for. It may have been moved, or the product may no longer be in season." %}
+    </p>
+    <div class="mt-9 flex flex-wrap justify-center gap-3">
+      <a href="{% url 'products:list' %}" class="btn-primary">{% translate "Browse the shop" %}</a>
+      <a href="{% url 'core:home' %}" class="btn-secondary">{% translate "Back to the farm" %}</a>
+    </div>
+  </section>
+{% endblock %}

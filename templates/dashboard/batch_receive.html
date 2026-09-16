@@ -1,0 +1,56 @@
+{% extends "dashboard/base_dashboard.html" %}
+{% load i18n %}
+
+{% block title %}{% translate "Receive stock" %} - {% translate "Dashboard" %}{% endblock %}
+{% block dash_title %}{% translate "Receive stock" %}{% endblock %}
+
+{% block dash_sidebar %}
+  {% include "dashboard/partials/_sidebar.html" with current="batches" %}
+{% endblock %}
+
+{% block dash_actions %}
+  <a href="{% url 'dashboard:batches' %}" class="text-charcoal-500 hover:text-farm-700">
+    {% translate "Back to batches" %}
+  </a>
+{% endblock %}
+
+{% block dash_content %}
+  <div class="max-w-2xl">
+    <form method="post" class="card space-y-5 p-6">
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+        <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+          {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+        </div>
+      {% endif %}
+
+      {% include "partials/_field.html" with field=form.variant %}
+      {% include "partials/_field.html" with field=form.batch_number %}
+      {% include "partials/_field.html" with field=form.quantity %}
+
+      <div class="grid gap-5 border-t border-cream-300 pt-5 sm:grid-cols-3">
+        {% include "partials/_field.html" with field=form.production_date %}
+        {% include "partials/_field.html" with field=form.received_date %}
+        {% include "partials/_field.html" with field=form.expiry_date %}
+      </div>
+
+      <div class="grid gap-5 border-t border-cream-300 pt-5 sm:grid-cols-3">
+        {% include "partials/_field.html" with field=form.unit_cost %}
+        {% include "partials/_field.html" with field=form.supplier %}
+        {% include "partials/_field.html" with field=form.storage_location %}
+      </div>
+
+      {% include "partials/_field.html" with field=form.notes %}
+
+      <p class="rounded-xl bg-cream-100 px-4 py-3 text-xs text-charcoal-600">
+        {% translate "Reusing an existing batch number for the same pack tops that batch up rather than creating a second one. Either way a stock movement is recorded, so the audit trail stays complete." %}
+      </p>
+
+      <div class="flex flex-wrap gap-3">
+        <button type="submit" class="btn-primary">{% translate "Book it in" %}</button>
+        <a href="{% url 'dashboard:batches' %}" class="btn-ghost">{% translate "Cancel" %}</a>
+      </div>
+    </form>
+  </div>
+{% endblock %}

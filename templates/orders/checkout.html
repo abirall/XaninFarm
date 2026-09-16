@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% load i18n farm_extras %}
+
+{% block title %}{% translate "Checkout" %} - {{ site_name }}{% endblock %}
+{% block meta_description %}{% translate "Confirm your delivery address and place your order." %}{% endblock %}
+
+{% block content %}
+  <div class="container-page py-12 sm:py-16">
+
+    <nav aria-label="{% translate 'Breadcrumb' %}" class="text-xs text-charcoal-500">
+      <a href="{% url 'cart:detail' %}" class="hover:text-farm-700">{% translate "Basket" %}</a>
+      <span class="mx-2 text-charcoal-300">/</span>
+      <span class="text-charcoal-700" aria-current="page">{% translate "Checkout" %}</span>
+    </nav>
+
+    <h1 class="mt-4 font-display text-display-sm font-semibold">{% translate "Checkout" %}</h1>
+
+    <div class="mt-10 grid gap-8 lg:grid-cols-[1fr_24rem] lg:items-start">
+
+      {# =============================================================== #}
+      {# Form                                                            #}
+      {# =============================================================== #}
+      <form id="checkout-form" action="{% url 'checkout:start' %}" method="post" class="space-y-6">
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+          <div class="rounded-2xl border border-red-200 bg-red-50 px-5 py-4 text-sm text-red-800" role="alert">
+            {% for error in form.non_field_errors %}<p>{{ error }}</p>{% endfor %}
+          </div>
+        {% endif %}
+
+        {# --- Delivery address --- #}
+        <fieldset class="card p-6">
+          <legend class="font-display text-lg font-semibold">{% translate "Deliver to" %}</legend>
+
+          {% if form.address.errors %}
+            <p class="form-error mt-2" role="alert">
+              <span>{{ form.address.errors|join:" " }}</span>
+            </p>
+          {% endif %}
+
+          <div class="mt-4 space-y-3">
+            {% for address in form.address.field.queryset %}
+              <label for="address-{{ address.pk }}" class="block">
+                {# Changing the address re-prices the order on the server: the
+                   zone decides the delivery fee and the minimum. #}
+                <input type="radio" id="address-{{ address.pk }}" name="address" value="{{ address.pk }}"
+                       class="peer sr-only"
+                       {% if selected_address.pk == address.pk %}checked{% endif %}
+                       hx-get="{% url 'checkout:summary' %}"
+                       hx-target="#checkout-summary"
+                       hx-swap="outerHTML">
+                <span class="block cursor-pointer rounded-2xl border border-charcoal-200 bg-white p-4 transition
+                             peer-focus-visible:ring-2 peer-focus-visible:ring-farm-600 peer-focus-visible:ring-offset-2
+                             peer-checked:border-farm-600 peer-checked:bg-farm-50 peer-checked:ring-1 peer-checked:ring-farm-600">
+                  <span class="flex flex-wrap items-center gap-2">
+                    <span class="font-medium text-charcoal-900">{{ address.recipient_name }}</span>
+                    <span class="badge-muted">{{ address.get_label_display }}</span>
+                    {% if address.is_default %}<span class="badge-farm">{% translate "Default" %}</span>{% endif %}
+                  </span>
+                  <span class="mt-1 block text-sm text-charcoal-600">{{ address.single_line }}</span>
+                  <span class="mt-0.5 block text-xs text-charcoal-400">{{ address.phone }}</span>
+                </span>
+              </label>
+            {% endfor %}
+          </div>
+
+          <a href="{% url 'accounts:address_create' %}?next={% url 'checkout:start' %}"
+             class="btn-ghost btn-sm mt-4">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14M5 12h14"/>
+            </svg>
+            {% translate "Add a new address" %}
+          </a>
+        </fieldset>
+
+        {# --- Delivery date --- #}
+        <fieldset class="card p-6">
+          <legend class="font-display text-lg font-semibold">{% translate "When" %}</legend>
+          <div class="mt-4 max-w-xs">
+            {% include "partials/_field.html" with field=form.requested_delivery_date hint=_("Leave empty and we will send it on the next run.") %}
+          </div>
+          {% if form.delivery_slot.errors %}
+            <p class="form-error mt-2" role="alert"><span>{{ form.delivery_slot.errors|join:" " }}</span></p>
+          {% endif %}
+          <p class="form-hint mt-2">{% translate "Choose a time window in the summary panel." %}</p>
+        </fieldset>
+
+        {# --- Payment --- #}
+        <fieldset class="card p-6">
+          <legend class="font-display text-lg font-semibold">{% translate "Payment" %}</legend>
+
+          {% if form.payment_method.errors %}
+            <p class="form-error mt-2" role="alert"><span>{{ form.payment_method.errors|join:" " }}</span></p>
+          {% endif %}
+
+          <div class="mt-4 space-y-3">
+            {% for radio in form.payment_method %}
+              {# The input is written out by hand rather than via radio.tag,
+                 which cannot be given the `peer` class the card styling needs. #}
+              <label for="payment-{{ radio.data.value }}" class="block">
+                <input type="radio" id="payment-{{ radio.data.value }}" name="payment_method"
+                       value="{{ radio.data.value }}" class="peer sr-only"
+                       {% if radio.data.selected %}checked{% endif %}>
+                <span class="block cursor-pointer rounded-2xl border border-charcoal-200 bg-white px-4 py-3.5 transition
+                             peer-focus-visible:ring-2 peer-focus-visible:ring-farm-600 peer-focus-visible:ring-offset-2
+                             peer-checked:border-farm-600 peer-checked:bg-farm-50 peer-checked:ring-1 peer-checked:ring-farm-600">
+                  <span class="font-medium text-charcoal-900">{{ radio.choice_label }}</span>
+                  {% if radio.data.value == "cod" %}
+                    <span class="mt-0.5 block text-xs text-charcoal-500">
+                      {% translate "Pay the rider in cash when your order arrives." %}
+                    </span>
+                  {% endif %}
+                </span>
+              </label>
+            {% endfor %}
+          </div>
+        </fieldset>
+
+        {# --- Note --- #}
+        <fieldset class="card p-6">
+          <legend class="font-display text-lg font-semibold">{% translate "Anything else" %}</legend>
+          <div class="mt-4">
+            {% include "partials/_field.html" with field=form.customer_note %}
+          </div>
+        </fieldset>
+      </form>
+
+      {# =============================================================== #}
+      {# Summary                                                         #}
+      {# =============================================================== #}
+      <div>
+        {% include "orders/partials/_checkout_summary.html" %}
+      </div>
+    </div>
+  </div>
+{% endblock %}
