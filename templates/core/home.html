@@ -14,39 +14,50 @@ JavaScript, it is keyboard scrollable, and with a single slide it
 renders as a plain hero. {% endcomment %}
 <section class="no-scrollbar flex snap-x snap-mandatory overflow-x-auto" aria-label="{% translate 'Featured' %}">
   {% for slide in hero_slides %}
-  <article class="relative w-full shrink-0 snap-center">
-    <img src="{{ slide.image.url }}" alt="{{ slide.image_alt }}" {% if forloop.first %}fetchpriority="high" {% else
-      %}loading="lazy" {% endif %} class="h-[68vh] max-h-[640px] min-h-[420px] w-full object-cover">
-    <div class="absolute inset-0 bg-gradient-to-r from-charcoal-900/75 via-charcoal-900/35 to-charcoal-900/10"></div>
+  {% comment %} Inset editorial frame rather than a full-bleed band: the rounded media sits
+     on the cream page with the background showing at the edges, which is the
+     current magazine-cover idiom and stops the hero reading as a stock banner. {% endcomment %}
+  <article class="relative w-full shrink-0 snap-center px-3 pt-3 sm:px-5 sm:pt-5">
+    <div class="media-frame relative isolate">
+      <img src="{{ slide.image.url }}" alt="{{ slide.image_alt }}" {% if forloop.first %}fetchpriority="high" {% else
+        %}loading="lazy" {% endif %} class="h-[72vh] max-h-[720px] min-h-[460px] w-full object-cover">
 
-    <div class="container-page absolute inset-0 flex items-center">
-      <div class="max-w-2xl animate-fade-up text-cream-50">
-        {% if slide.eyebrow %}
-        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-honey-300">
-          {{ slide.eyebrow }}
-        </p>
-        {% endif %}
-        <h1
-          class="mt-4 text-balance font-display text-display-md font-semibold tracking-tight !text-cream-50 sm:text-display-lg lg:text-display-xl">
-          {{ slide.title }}
-        </h1>
-        {% if slide.subtitle %}
-        <p class="mt-5 max-w-lg text-base leading-relaxed text-cream-200 sm:text-lg">
-          {{ slide.subtitle }}
-        </p>
-        {% endif %}
-        <div class="mt-9 flex flex-wrap gap-3">
-          {% if slide.cta_label and slide.cta_url %}
-          <a href="{{ slide.cta_url }}" class="btn-honey">{{ slide.cta_label }}</a>
-          {% else %}
-          <a href="{% url 'products:list' %}" class="btn-honey">{% translate "Shop the farm" %}</a>
+      {% comment %} Two stacked scrims. The vertical one anchors the text block at the
+         bottom, the horizontal one keeps the left edge dark enough for the
+         headline to hold 4.5:1 over a bright photograph. {% endcomment %}
+      <div class="absolute inset-0 bg-gradient-to-t from-charcoal-900/90 via-charcoal-900/35 to-transparent"></div>
+      <div class="absolute inset-0 bg-gradient-to-r from-charcoal-900/60 to-transparent"></div>
+
+      <div class="container-page absolute inset-x-0 bottom-0">
+        <div class="max-w-3xl animate-fade-up pb-12 text-cream-50 sm:pb-16 lg:pb-20">
+          {% if slide.eyebrow %}
+          <p class="inline-flex items-center gap-2.5 rounded-full bg-cream-50/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-honey-200 ring-1 ring-cream-50/20 backdrop-blur-md">
+            <span class="h-1.5 w-1.5 rounded-full bg-honey-300" aria-hidden="true"></span>
+            {{ slide.eyebrow }}
+          </p>
           {% endif %}
-          {% if slide.secondary_cta_label and slide.secondary_cta_url %}
-          <a href="{{ slide.secondary_cta_url }}"
-            class="btn border border-cream-50/40 text-cream-50 hover:bg-cream-50/10">
-            {{ slide.secondary_cta_label }}
-          </a>
+          <h1
+            class="mt-6 text-balance font-display text-display-md font-semibold !text-cream-50 sm:text-display-lg lg:text-display-xl">
+            {{ slide.title }}
+          </h1>
+          {% if slide.subtitle %}
+          <p class="mt-6 max-w-xl text-base leading-relaxed text-cream-200 sm:text-lg">
+            {{ slide.subtitle }}
+          </p>
           {% endif %}
+          <div class="mt-10 flex flex-wrap gap-3">
+            {% if slide.cta_label and slide.cta_url %}
+            <a href="{{ slide.cta_url }}" class="btn-honey btn-lg">{{ slide.cta_label }}</a>
+            {% else %}
+            <a href="{% url 'products:list' %}" class="btn-honey btn-lg">{% translate "Shop the farm" %}</a>
+            {% endif %}
+            {% if slide.secondary_cta_label and slide.secondary_cta_url %}
+            <a href="{{ slide.secondary_cta_url }}"
+              class="btn btn-lg border border-cream-50/30 bg-cream-50/10 text-cream-50 backdrop-blur-md hover:bg-cream-50/20">
+              {{ slide.secondary_cta_label }}
+            </a>
+            {% endif %}
+          </div>
         </div>
       </div>
     </div>
@@ -55,20 +66,25 @@ renders as a plain hero. {% endcomment %}
 </section>
 {% else %}
 {# No hero content loaded yet - the brand still has to land. #}
-<section class="bg-grain bg-farm-900">
-  <div class="container-page flex min-h-[60vh] flex-col justify-center py-24 text-cream-50">
-    <p class="text-xs font-semibold uppercase tracking-[0.18em] text-honey-300">
-      {% translate "Farm to home" %}
-    </p>
-    <h1
-      class="mt-4 max-w-3xl text-balance font-display text-display-md font-semibold !text-cream-50 sm:text-display-lg">
-      {{ site_tagline }}
-    </h1>
-    <p class="mt-5 max-w-xl text-lg text-cream-200">
-      {% translate "Milk drawn this morning, honey from our own hives, chicken and beef raised without shortcuts." %}
-    </p>
-    <div class="mt-9">
-      <a href="{% url 'products:list' %}" class="btn-honey">{% translate "Shop the farm" %}</a>
+<section class="px-3 pt-3 sm:px-5 sm:pt-5">
+  <div class="media-frame bg-grain relative bg-farm-900">
+    {# Warm light bleeding in from the corners keeps the flat green from reading as a colour swatch. #}
+    <div class="absolute inset-0 bg-[radial-gradient(60rem_32rem_at_15%_0%,rgba(228,178,58,0.20),transparent_70%),radial-gradient(48rem_28rem_at_100%_100%,rgba(93,155,116,0.30),transparent_70%)]"></div>
+    <div class="container-page relative flex min-h-[62vh] flex-col justify-center py-24 text-cream-50 lg:py-32">
+      <p class="inline-flex w-fit items-center gap-2.5 rounded-full bg-cream-50/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.18em] text-honey-200 ring-1 ring-cream-50/20">
+        <span class="h-1.5 w-1.5 rounded-full bg-honey-300" aria-hidden="true"></span>
+        {% translate "Farm to home" %}
+      </p>
+      <h1
+        class="mt-6 max-w-4xl text-balance font-display text-display-md font-semibold !text-cream-50 sm:text-display-lg lg:text-display-xl">
+        {{ site_tagline }}
+      </h1>
+      <p class="mt-6 max-w-xl text-lg leading-relaxed text-cream-200">
+        {% translate "Milk drawn this morning, honey from our own hives, chicken and beef raised without shortcuts." %}
+      </p>
+      <div class="mt-10">
+        <a href="{% url 'products:list' %}" class="btn-honey btn-lg">{% translate "Shop the farm" %}</a>
+      </div>
     </div>
   </div>
 </section>
@@ -78,11 +94,12 @@ renders as a plain hero. {% endcomment %}
 {# Why the farm #}
 {# ===================================================================== #}
 {% if value_props %}
-<section class="border-b border-cream-300 bg-cream-50 reveal">
-  <div class="container-page grid gap-8 py-14 sm:grid-cols-2 lg:grid-cols-4">
+<section class="reveal">
+  <div class="container-page grid gap-6 py-16 sm:grid-cols-2 lg:grid-cols-4">
     {% for prop in value_props %}
-    <div class="flex gap-4">
-      <span class="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-farm-100 text-farm-700">
+    {# Each prop is its own quiet tile now, rather than four items floating on a band. #}
+    <div class="group flex gap-4 rounded-3xl p-5 transition duration-300 ease-out-soft hover:bg-white hover:shadow-soft">
+      <span class="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-farm-100 to-farm-200 text-farm-700 ring-1 ring-farm-900/5 transition duration-300 group-hover:from-farm-700 group-hover:to-farm-800 group-hover:text-cream-50">
         <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24"
           aria-hidden="true">
           {% if prop.icon == 'truck' %}
@@ -107,8 +124,8 @@ renders as a plain hero. {% endcomment %}
         </svg>
       </span>
       <div>
-        <h2 class="text-base font-semibold text-charcoal-900">{{ prop.title }}</h2>
-        <p class="mt-1 text-sm leading-relaxed text-charcoal-500">{{ prop.description }}</p>
+        <h2 class="font-display text-base font-semibold text-charcoal-900">{{ prop.title }}</h2>
+        <p class="mt-1.5 text-sm leading-relaxed text-charcoal-500">{{ prop.description }}</p>
       </div>
     </div>
     {% endfor %}
@@ -120,11 +137,11 @@ renders as a plain hero. {% endcomment %}
 {# Categories #}
 {# ===================================================================== #}
 {% if categories %}
-<section class="container-page py-20 reveal">
+<section class="container-page py-24 reveal">
   <div class="flex flex-wrap items-end justify-between gap-4">
     <div>
       <p class="eyebrow">{% translate "From our fields" %}</p>
-      <h2 class="mt-3 font-display text-display-sm font-semibold">{% translate "Shop by category" %}</h2>
+      <h2 class="mt-4 font-display text-display-sm font-semibold">{% translate "Shop by category" %}</h2>
     </div>
     <a href="{% url 'products:list' %}" class="btn-ghost btn-sm">
       {% translate "See everything" %}
@@ -134,22 +151,43 @@ renders as a plain hero. {% endcomment %}
     </a>
   </div>
 
-  <div class="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+  {% comment %} Bento grid. The first category takes a 2x2 tile and the rest fill around it,
+     so the block has a focal point instead of reading as an undifferentiated
+     row of equal rectangles. Collapses to a single column on phones, where
+     varied spans would just make the tiles inconsistent heights. {% endcomment %}
+  <div class="mt-12 grid auto-rows-[13rem] grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
     {% for category in categories %}
-    <a href="{{ category.get_absolute_url }}" class="group relative overflow-hidden rounded-2xl bg-farm-800 shadow-card transition
-                    duration-300 ease-out-soft hover:shadow-card-hover">
+    <a href="{{ category.get_absolute_url }}"
+      class="group relative overflow-hidden rounded-4xl bg-farm-800 shadow-card ring-1 ring-charcoal-900/5
+             transition duration-300 ease-out-soft hover:shadow-card-hover
+             focus-visible:ring-2 focus-visible:ring-farm-600 focus-visible:ring-offset-2
+             {% if forloop.first %}sm:col-span-2 sm:row-span-2{% endif %}">
       {% if category.image %}
       <img src="{{ category.image.url }}" alt="{{ category.image_alt }}" loading="lazy"
-        class="h-56 w-full object-cover opacity-85 transition duration-500 ease-out-soft group-hover:scale-105 group-hover:opacity-95">
+        class="h-full w-full object-cover opacity-90 transition duration-700 ease-out-soft group-hover:scale-[1.04] group-hover:opacity-100">
       {% else %}
-      <div class="bg-grain h-56 w-full bg-farm-700"></div>
+      <div class="bg-grain h-full w-full bg-farm-700"></div>
       {% endif %}
-      <div class="absolute inset-0 bg-gradient-to-t from-charcoal-900/85 to-transparent"></div>
-      <div class="absolute inset-x-0 bottom-0 p-6">
-        <h3 class="font-display text-2xl font-semibold tracking-tight !text-cream-50">{{ category.name }}</h3>
-        {% if category.description %}
-        <p class="mt-1 line-clamp-1 text-sm text-cream-300">{{ category.description }}</p>
-        {% endif %}
+      <div class="absolute inset-0 bg-gradient-to-t from-charcoal-900/90 via-charcoal-900/20 to-transparent"></div>
+
+      <div class="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-6 {% if forloop.first %}sm:p-8{% endif %}">
+        <div class="min-w-0">
+          <h3 class="font-display font-semibold !text-cream-50 {% if forloop.first %}text-3xl sm:text-4xl{% else %}text-xl{% endif %}">
+            {{ category.name }}
+          </h3>
+          {% if category.description %}
+          <p class="mt-1.5 line-clamp-1 text-sm text-cream-300">{{ category.description }}</p>
+          {% endif %}
+        </div>
+        {% comment %} The arrow slides in on hover. Translate plus opacity only, so nothing
+           in the tile reflows. {% endcomment %}
+        <span class="grid h-10 w-10 shrink-0 translate-x-1 place-items-center rounded-full bg-cream-50/15 text-cream-50
+                     opacity-0 ring-1 ring-cream-50/25 backdrop-blur-md transition duration-300 ease-out-soft
+                     group-hover:translate-x-0 group-hover:opacity-100" aria-hidden="true">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12h15m0 0-5.5-5.5M19.5 12 14 17.5" />
+          </svg>
+        </span>
       </div>
     </a>
     {% endfor %}
@@ -161,19 +199,19 @@ renders as a plain hero. {% endcomment %}
 {# Featured produce #}
 {# ===================================================================== #}
 {% if featured_products %}
-<section class="border-y border-cream-300 bg-cream-50 reveal">
-  <div class="container-page py-20">
+<section class="bg-glow-farm border-y border-charcoal-900/5 reveal">
+  <div class="container-page py-24">
     <div class="flex flex-wrap items-end justify-between gap-4">
       <div>
         <p class="eyebrow">{% translate "Picked for you" %}</p>
-        <h2 class="mt-3 font-display text-display-sm font-semibold">{% translate "Farm favourites" %}</h2>
+        <h2 class="mt-4 font-display text-display-sm font-semibold">{% translate "Farm favourites" %}</h2>
       </div>
       <a href="{% url 'products:list' %}?sort=featured" class="btn-secondary btn-sm">
         {% translate "View all" %}
       </a>
     </div>
 
-    <div class="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+    <div class="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
       {% for product in featured_products %}
       {% include "partials/_product_card.html" %}
       {% endfor %}
@@ -187,21 +225,25 @@ renders as a plain hero. {% endcomment %}
 {# ===================================================================== #}
 {% for banner in banners %}
 {% if banner.placement == 'home_mid' %}
-<section class="container-page py-16 reveal">
-  <div class="relative overflow-hidden rounded-2xl bg-farm-800 shadow-card">
+<section class="container-page py-24 reveal">
+  <div class="relative overflow-hidden rounded-5xl bg-farm-900 shadow-card">
     {% if banner.image %}
     <img src="{{ banner.image.url }}" alt="{{ banner.image_alt }}" loading="lazy"
-      class="absolute inset-0 h-full w-full object-cover opacity-40">
+      class="absolute inset-0 h-full w-full object-cover opacity-45">
     {% endif %}
-    <div class="relative flex flex-col items-start gap-6 p-10 sm:p-14 lg:flex-row lg:items-center lg:justify-between">
+    {# Warm corner light so the panel has depth whether or not a banner image is set. #}
+    <div class="absolute inset-0 bg-[radial-gradient(45rem_25rem_at_85%_0%,rgba(228,178,58,0.28),transparent_70%)]"></div>
+    <div class="absolute inset-0 bg-gradient-to-r from-farm-950/85 via-farm-900/55 to-transparent"></div>
+
+    <div class="relative flex flex-col items-start gap-8 p-10 sm:p-16 lg:flex-row lg:items-center lg:justify-between">
       <div class="max-w-xl">
-        <h2 class="font-display text-display-sm tracking-tight font-semibold !text-cream-50">{{ banner.title }}</h2>
+        <h2 class="text-balance font-display text-display-sm font-semibold !text-cream-50">{{ banner.title }}</h2>
         {% if banner.subtitle %}
-        <p class="mt-3 text-cream-200">{{ banner.subtitle }}</p>
+        <p class="mt-4 leading-relaxed text-cream-200">{{ banner.subtitle }}</p>
         {% endif %}
       </div>
       {% if banner.cta_label and banner.cta_url %}
-      <a href="{{ banner.cta_url }}" class="btn-honey shrink-0">{{ banner.cta_label }}</a>
+      <a href="{{ banner.cta_url }}" class="btn-honey btn-lg shrink-0">{{ banner.cta_label }}</a>
       {% endif %}
     </div>
   </div>
@@ -213,11 +255,11 @@ renders as a plain hero. {% endcomment %}
 {# New arrivals #}
 {# ===================================================================== #}
 {% if new_arrivals %}
-<section class="container-page py-20 reveal">
+<section class="container-page py-24 reveal">
   <div class="flex flex-wrap items-end justify-between gap-4">
     <div>
       <p class="eyebrow">{% translate "Just in" %}</p>
-      <h2 class="mt-3 font-display text-display-sm font-semibold">{% translate "Fresh this week" %}</h2>
+      <h2 class="mt-4 font-display text-display-sm font-semibold">{% translate "Fresh this week" %}</h2>
     </div>
     <a href="{% url 'products:list' %}?sort=newest" class="btn-secondary btn-sm">{% translate "View all" %}</a>
   </div>
@@ -234,37 +276,44 @@ renders as a plain hero. {% endcomment %}
 {# The farm story #}
 {# ===================================================================== #}
 {% if site.about_short %}
-<section class="bg-grain border-y border-cream-300 bg-cream-200 reveal">
-  <div class="container-page grid items-center gap-12 py-20 lg:grid-cols-2">
+<section class="bg-grain border-y border-charcoal-900/5 bg-cream-200/60 reveal">
+  <div class="container-page grid items-center gap-14 py-24 lg:grid-cols-2">
     <div>
       <p class="eyebrow">{% translate "Our story" %}</p>
-      <h2 class="mt-3 max-w-lg text-balance font-display text-display-sm font-semibold">
+      <h2 class="mt-4 max-w-lg text-balance font-display text-display-sm font-semibold">
         {{ site_tagline }}
       </h2>
-      <p class="mt-6 max-w-xl leading-relaxed text-charcoal-600">{{ site.about_short }}</p>
-      <dl class="mt-10 grid max-w-md grid-cols-3 gap-6">
-        <div>
-          <dt class="text-xs uppercase tracking-wider text-charcoal-500">{% translate "Delivery" %}</dt>
-          <dd class="mt-1 font-display text-2xl font-semibold text-farm-800">{% translate "Same day" %}</dd>
+      <p class="mt-6 max-w-xl text-lg leading-relaxed text-charcoal-600">{{ site.about_short }}</p>
+      {# Stat row on its own card so the numbers read as a credential block. #}
+      <dl class="mt-10 grid max-w-lg grid-cols-3 divide-x divide-charcoal-900/10 rounded-3xl bg-white/70 p-2 ring-1 ring-charcoal-900/5 backdrop-blur-sm">
+        <div class="px-4 py-3">
+          <dt class="text-[11px] uppercase tracking-[0.14em] text-charcoal-500">{% translate "Delivery" %}</dt>
+          <dd class="mt-1.5 font-display text-xl font-semibold text-farm-800">{% translate "Same day" %}</dd>
         </div>
-        <div>
-          <dt class="text-xs uppercase tracking-wider text-charcoal-500">{% translate "Payment" %}</dt>
-          <dd class="mt-1 font-display text-2xl font-semibold text-farm-800">{% translate "On delivery" %}</dd>
+        <div class="px-4 py-3">
+          <dt class="text-[11px] uppercase tracking-[0.14em] text-charcoal-500">{% translate "Payment" %}</dt>
+          <dd class="mt-1.5 font-display text-xl font-semibold text-farm-800">{% translate "On delivery" %}</dd>
         </div>
-        <div>
-          <dt class="text-xs uppercase tracking-wider text-charcoal-500">{% translate "Sourcing" %}</dt>
-          <dd class="mt-1 font-display text-2xl font-semibold text-farm-800">{% translate "Own farm" %}</dd>
+        <div class="px-4 py-3">
+          <dt class="text-[11px] uppercase tracking-[0.14em] text-charcoal-500">{% translate "Sourcing" %}</dt>
+          <dd class="mt-1.5 font-display text-xl font-semibold text-farm-800">{% translate "Own farm" %}</dd>
         </div>
       </dl>
     </div>
 
-    <div class="surface p-8 lg:p-10">
+    <div class="card p-8 lg:p-10">
       <h3 class="font-display text-xl font-semibold">{% translate "How your order reaches you" %}</h3>
-      <ol class="mt-6 space-y-5">
+      {% comment %} Connected timeline. The rail is drawn per-step with a pseudo-element and
+         suppressed on the last one, so the line stops at the final marker
+         instead of trailing off past it. {% endcomment %}
+      <ol class="mt-7 space-y-1">
         {% for step in "1234" %}
-        <li class="flex gap-4">
+        <li class="relative flex gap-4 pb-6 last:pb-0
+                   before:absolute before:left-[0.9375rem] before:top-9 before:h-[calc(100%-1.5rem)] before:w-px
+                   before:bg-gradient-to-b before:from-farm-300 before:to-farm-200 before:content-['']
+                   last:before:hidden">
           <span
-            class="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-farm-700 text-sm font-bold text-cream-50">
+            class="relative z-10 grid h-8 w-8 shrink-0 place-items-center rounded-full bg-gradient-to-b from-farm-600 to-farm-700 text-sm font-bold text-cream-50 ring-4 ring-white">
             {{ forloop.counter }}
           </span>
           <div>
@@ -298,18 +347,20 @@ renders as a plain hero. {% endcomment %}
 {# Testimonials #}
 {# ===================================================================== #}
 {% if testimonials %}
-<section class="container-page py-20 reveal">
+<section class="container-page py-24 reveal">
   <p class="eyebrow">{% translate "From our kitchen tables" %}</p>
-  <h2 class="mt-3 font-display text-display-sm font-semibold">{% translate "What families say" %}</h2>
+  <h2 class="mt-4 font-display text-display-sm font-semibold">{% translate "What families say" %}</h2>
 
-  <div class="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+  <div class="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
     {% for testimonial in testimonials %}
-    <figure class="card flex h-full flex-col p-7">
+    <figure class="card relative flex h-full flex-col p-8 transition duration-300 ease-out-soft hover:shadow-card-hover">
+      {# Oversized quote glyph, decorative only - the real quote marks stay in the text. #}
+      <span class="pointer-events-none absolute right-7 top-4 font-display text-7xl leading-none text-farm-100 select-none" aria-hidden="true">&rdquo;</span>
       {% star_rating testimonial.rating %}
-      <blockquote class="mt-4 flex-1 leading-relaxed text-charcoal-700">
+      <blockquote class="relative mt-5 flex-1 leading-relaxed text-charcoal-700">
         &ldquo;{{ testimonial.quote }}&rdquo;
       </blockquote>
-      <figcaption class="mt-6 flex items-center gap-3 border-t border-charcoal-100 pt-5">
+      <figcaption class="mt-7 flex items-center gap-3 border-t border-charcoal-900/5 pt-6">
         {% if testimonial.avatar %}
         <img src="{{ testimonial.avatar.url }}" alt="" loading="lazy" class="h-10 w-10 rounded-full object-cover">
         {% else %}
@@ -336,14 +387,14 @@ renders as a plain hero. {% endcomment %}
 {# ===================================================================== #}
 {% for banner in banners %}
 {% if banner.placement == 'home_bottom' %}
-<section class="container-page pb-20 reveal">
-  <div class="surface flex flex-col items-start gap-6 p-10 sm:p-12 lg:flex-row lg:items-center lg:justify-between">
+<section class="container-page pb-24 reveal">
+  <div class="panel-tint flex flex-col items-start gap-6 p-10 ring-1 ring-charcoal-900/5 sm:p-14 lg:flex-row lg:items-center lg:justify-between">
     <div class="max-w-xl">
-      <h2 class="font-display text-2xl font-semibold">{{ banner.title }}</h2>
-      {% if banner.subtitle %}<p class="mt-2 text-charcoal-600">{{ banner.subtitle }}</p>{% endif %}
+      <h2 class="text-balance font-display text-3xl font-semibold">{{ banner.title }}</h2>
+      {% if banner.subtitle %}<p class="mt-3 leading-relaxed text-charcoal-600">{{ banner.subtitle }}</p>{% endif %}
     </div>
     {% if banner.cta_label and banner.cta_url %}
-    <a href="{{ banner.cta_url }}" class="btn-primary shrink-0">{{ banner.cta_label }}</a>
+    <a href="{{ banner.cta_url }}" class="btn-primary btn-lg shrink-0">{{ banner.cta_label }}</a>
     {% endif %}
   </div>
 </section>

@@ -72,18 +72,28 @@ module.exports = {
         sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'sans-serif'],
       },
       fontSize: {
-        'display-sm': ['2rem', { lineHeight: '1.15', letterSpacing: '-0.02em' }],
-        'display-md': ['2.75rem', { lineHeight: '1.1', letterSpacing: '-0.02em' }],
-        'display-lg': ['3.75rem', { lineHeight: '1.05', letterSpacing: '-0.03em' }],
-        'display-xl': ['4.75rem', { lineHeight: '1', letterSpacing: '-0.03em' }],
+        'display-sm': ['2.125rem', { lineHeight: '1.12', letterSpacing: '-0.022em' }],
+        'display-md': ['2.875rem', { lineHeight: '1.08', letterSpacing: '-0.028em' }],
+        'display-lg': ['3.875rem', { lineHeight: '1.02', letterSpacing: '-0.034em' }],
+        'display-xl': ['5rem', { lineHeight: '0.98', letterSpacing: '-0.038em' }],
+        // Editorial hero scale. Optical tracking has to tighten as size grows or
+        // large Fraunces settings look loose and amateurish.
+        'display-2xl': ['6.5rem', { lineHeight: '0.94', letterSpacing: '-0.042em' }],
       },
       boxShadow: {
-        card: '0 10px 30px -5px rgba(28,27,24,0.05), 0 4px 10px -2px rgba(28,27,24,0.02)',
-        'card-hover': '0 20px 40px -5px rgba(28,27,24,0.08), 0 8px 16px -2px rgba(28,27,24,0.03)',
+        // Layered rather than single-stop. Real depth comes from a tight contact
+        // shadow plus a wide ambient one; a lone large blur reads as a grey
+        // smudge under the card, which is what dates a UI fastest.
+        soft: '0 1px 2px rgba(28,27,24,0.04), 0 2px 8px -2px rgba(28,27,24,0.05)',
+        card: '0 1px 2px rgba(28,27,24,0.04), 0 4px 12px -2px rgba(28,27,24,0.05), 0 12px 32px -8px rgba(28,27,24,0.07)',
+        'card-hover':
+          '0 2px 4px rgba(28,27,24,0.05), 0 10px 24px -4px rgba(28,27,24,0.09), 0 28px 60px -12px rgba(28,27,24,0.14)',
+        lift: '0 20px 50px -12px rgba(24,53,36,0.28)',
         inset: 'inset 0 1px 0 rgba(255,255,255,0.6)',
       },
       borderRadius: {
         '4xl': '2rem',
+        '5xl': '2.5rem',
       },
       spacing: {
         18: '4.5rem',

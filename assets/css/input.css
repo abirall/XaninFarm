@@ -83,29 +83,35 @@
     @apply mx-auto w-full max-w-8xl px-5 sm:px-8 lg:px-12;
   }
 
-  /* --- Buttons --- */
+  /* --- Buttons ---
+     Fully rounded, which is the current idiom for consumer retail and reads
+     softer against the organic brand than the old 12px corners. Tracking is
+     normal rather than wide: letter-spaced button labels are a 2015 tell. */
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm
-      font-semibold tracking-wide transition duration-200 ease-out-soft
+    @apply inline-flex cursor-pointer items-center justify-center gap-2 rounded-full px-6 py-3
+      text-sm font-semibold transition-all duration-200 ease-out-soft
       disabled:cursor-not-allowed disabled:opacity-50;
   }
 
+  /* The gradient is a two-stop lift within the same hue, not a colour shift -
+     it gives the fill some dimension without looking like a 2012 web button. */
   .btn-primary {
-    @apply btn bg-farm-800 text-cream-50 shadow-sm hover:bg-farm-900
-      hover:shadow-card active:scale-[0.98] hover:-translate-y-0.5;
+    @apply btn bg-gradient-to-b from-farm-700 to-farm-800 text-cream-50 shadow-soft
+      hover:from-farm-600 hover:to-farm-700 hover:shadow-lift active:scale-[0.98];
   }
 
   .btn-secondary {
-    @apply btn border border-charcoal-200 bg-white text-charcoal-800
-      hover:border-farm-600 hover:text-farm-700 active:scale-[0.98] hover:-translate-y-0.5 hover:shadow-sm;
+    @apply btn border border-charcoal-200/80 bg-white/80 text-charcoal-800 backdrop-blur-sm
+      hover:border-farm-300 hover:bg-white hover:text-farm-800 hover:shadow-soft active:scale-[0.98];
   }
 
   .btn-honey {
-    @apply btn bg-honey-400 text-charcoal-900 shadow-sm ring-1 ring-honey-500/20 hover:bg-honey-300 active:scale-[0.98] hover:-translate-y-0.5;
+    @apply btn bg-gradient-to-b from-honey-300 to-honey-400 text-charcoal-900 shadow-soft
+      hover:from-honey-200 hover:to-honey-300 hover:shadow-card active:scale-[0.98];
   }
 
   .btn-ghost {
-    @apply btn text-charcoal-700 hover:bg-cream-200 hover:text-charcoal-900 active:scale-[0.98];
+    @apply btn text-charcoal-700 hover:bg-charcoal-900/5 hover:text-charcoal-900 active:scale-[0.98];
   }
 
   .btn-danger {
@@ -116,13 +122,25 @@
     @apply px-4 py-2 text-xs;
   }
 
-  /* --- Surfaces --- */
+  .btn-lg {
+    @apply px-8 py-4 text-base;
+  }
+
+  /* --- Surfaces ---
+     24px corners rather than 16px. Radius is the single strongest signal of
+     how current an interface looks, and it has to grow with the card. */
   .card {
-    @apply rounded-2xl border border-charcoal-100 bg-white shadow-card;
+    @apply rounded-3xl border border-charcoal-900/5 bg-white shadow-card;
   }
 
   .surface {
-    @apply rounded-2xl border border-cream-300 bg-cream-50 shadow-inset;
+    @apply rounded-3xl border border-cream-300/80 bg-cream-50 shadow-inset;
+  }
+
+  /* Editorial panel: a tinted, borderless block for pulling a section out of
+     the page flow without the boxed-in look of a bordered card. */
+  .panel-tint {
+    @apply rounded-4xl bg-gradient-to-br from-cream-100 to-cream-200/70;
   }
 
   .glass-panel {
@@ -168,8 +186,11 @@
   }
 
   /* --- Type --- */
+  /* The leading dash gives the eyebrow an anchor so it reads as a kicker rather
+     than as small shouting text floating above the heading. */
   .eyebrow {
-    @apply text-xs font-semibold uppercase tracking-[0.18em] text-farm-700;
+    @apply inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-farm-700
+      before:h-px before:w-6 before:bg-farm-400 before:content-[''];
   }
 
   .section-heading {
@@ -203,6 +224,31 @@
   .bg-grain {
     background-image: radial-gradient(rgba(28, 27, 24, 0.045) 1px, transparent 1px);
     background-size: 4px 4px;
+  }
+
+  /* Hairline divider that fades out at both ends instead of stopping dead -
+     a cheap, very current way to break sections without a hard 1px rule. */
+  .rule-fade {
+    height: 1px;
+    background: linear-gradient(
+      to right,
+      transparent,
+      theme('colors.charcoal.200'),
+      transparent
+    );
+  }
+
+  /* Warm ambient wash for section backgrounds. Two offset radial tints read as
+     light falling across paper rather than as a flat colour block. */
+  .bg-glow-farm {
+    background-image:
+      radial-gradient(60rem 30rem at 12% -10%, rgba(93, 155, 116, 0.13), transparent 70%),
+      radial-gradient(48rem 26rem at 95% 8%, rgba(228, 178, 58, 0.14), transparent 70%);
+  }
+
+  /* Media that should sit slightly proud of the page. */
+  .media-frame {
+    @apply overflow-hidden rounded-4xl ring-1 ring-charcoal-900/5;
   }
 
   .text-balance {
