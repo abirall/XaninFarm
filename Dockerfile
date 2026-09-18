@@ -1,16 +1,12 @@
 # syntax=docker/dockerfile:1
-
-# =============================================================================
-# XaninFarm application image
 #
-# Three stages:
+# XaninFarm application image.
+#
 #   1. assets  - node builds Tailwind into static/css/app.css
-#   2. deps    - python wheels built once, with the compilers they need
-#   3. runtime - slim image, no compilers, no node, runs as a non-root user
+#   2. runtime - python image, no node toolchain, runs as a non-root user
 #
-# The split matters: the final image never carries build-essential or the node
-# toolchain, and a change to Python code does not invalidate the wheel cache.
-# =============================================================================
+# There is no compiler stage: psycopg[binary] and Pillow both ship prebuilt
+# wheels, so pip never needs build-essential here.
 
 
 # -----------------------------------------------------------------------------
@@ -20,13 +16,11 @@ FROM node:22-slim AS assets
 
 WORKDIR /build
 
-# Only the manifest first, so `npm ci` is re-run when dependencies change and
-# not every time a template is edited.
+# Manifest first, so npm only re-runs when dependencies change.
 COPY package.json package-lock.json* ./
 RUN npm install --no-audit --no-fund
 
-# Tailwind scans templates and JS to decide which classes to emit, so the
-# config and every source it globs must be present before `npm run build`.
+# Tailwind scans these to decide which classes to emit.
 COPY tailwind.config.js ./
 COPY assets/ ./assets/
 COPY templates/ ./templates/
@@ -37,34 +31,7 @@ RUN npm run build
 
 
 # -----------------------------------------------------------------------------
-# 2. Python dependencies
-# -----------------------------------------------------------------------------
-FROM python:3.12-slim AS deps
-
-ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    PIP_NO_CACHE_DIR=1
-
-# libpq-dev and gcc are needed to build psycopg and Pillow; they stay in this
-# stage and never reach the runtime image.
-RUN apt-get update && apt-get install --no-install-recommends -y \
-    build-essential \
-    libpq-dev \
-    libjpeg-dev \
-    zlib1g-dev \
-    libwebp-dev \
-    && rm -rf /var/lib/apt/lists/*
-
-WORKDIR /wheels
-COPY requirements/ ./requirements/
-
-# Build wheels for prod by default. `--build-arg REQUIREMENTS=dev` produces an
-# image with pytest, ruff and the debug toolbar for CI and local work.
-ARG REQUIREMENTS=prod
-RUN pip wheel --wheel-dir /wheels/dist -r requirements/${REQUIREMENTS}.txt
-
-
-# -----------------------------------------------------------------------------
-# 3. Runtime
+# 2. Runtime
 # -----------------------------------------------------------------------------
 FROM python:3.12-slim AS runtime
 
@@ -74,46 +41,36 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     DJANGO_SETTINGS_MODULE=config.settings.prod
 
-# Runtime libraries only - the -dev headers were build-time concerns.
-# postgresql-client supplies pg_isready and pg_dump, used by the entrypoint
-# and the backup documentation.
+# postgresql-client supplies pg_isready and psql, used by the entrypoint.
 RUN apt-get update && apt-get install --no-install-recommends -y \
-    libpq5 \
-    libjpeg62-turbo \
-    libwebp7 \
     postgresql-client \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Run as a non-root user. Created before the code is copied so ownership can be
-# set in a single COPY rather than a costly recursive chown layer.
-RUN groupadd --system --gid 1001 farm \
-    && useradd --system --uid 1001 --gid farm --create-home --shell /bin/bash farm
+RUN useradd --system --create-home --uid 1001 farm
 
 WORKDIR /app
 
+# `--build-arg REQUIREMENTS=dev` adds pytest, ruff and the debug toolbar.
 ARG REQUIREMENTS=prod
-COPY --from=deps /wheels/dist /wheels/dist
 COPY requirements/ ./requirements/
-RUN pip install --no-index --find-links=/wheels/dist -r requirements/${REQUIREMENTS}.txt \
-    && rm -rf /wheels
+RUN pip install -r requirements/${REQUIREMENTS}.txt
 
 COPY --chown=farm:farm . .
 
-# The compiled stylesheet from the node stage replaces whatever the build
-# context happened to contain, so the image never ships a stale app.css.
+# The compiled stylesheet replaces whatever the build context contained, so the
+# image never ships a stale app.css.
 COPY --from=assets --chown=farm:farm /build/static/css/app.css ./static/css/app.css
 
-COPY --chown=farm:farm docker/entrypoint.sh /usr/local/bin/entrypoint.sh
-# The sed strips carriage returns. This project is developed on Windows, and a
-# script checked out with CRLF endings fails in the container with an
-# "exec format error" that gives no hint about why.
+# Kept outside /app so the dev bind mount cannot shadow it. The sed strips
+# carriage returns: this project is developed on Windows, and a script checked
+# out with CRLF fails in the container with an "exec format error" that gives
+# no hint about why.
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN sed -i 's/\r$//' /usr/local/bin/entrypoint.sh \
-    && chmod +x /usr/local/bin/entrypoint.sh
-
-# Writable at runtime: collectstatic writes here, and uploads land in media.
-RUN mkdir -p /app/staticfiles /app/mediafiles \
-    && chown -R farm:farm /app/staticfiles /app/mediafiles
+    && chmod +x /usr/local/bin/entrypoint.sh \
+    && mkdir -p staticfiles mediafiles \
+    && chown farm:farm staticfiles mediafiles
 
 USER farm
 

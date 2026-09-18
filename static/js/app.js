@@ -18,12 +18,22 @@
     var panel = document.getElementById(button.getAttribute('aria-controls'));
     if (!panel) return;
     var open = panel.hasAttribute('hidden');
+
     if (open) {
       panel.removeAttribute('hidden');
     } else {
       panel.setAttribute('hidden', '');
     }
     button.setAttribute('aria-expanded', open ? 'true' : 'false');
+
+    /*
+     * Closing from anywhere - Escape, a second tap - has to put focus back on
+     * the toggle. Without this, dismissing the menu drops focus onto <body>
+     * and a keyboard user restarts their tab run from the top of the document.
+     */
+    if (!open) {
+      button.focus();
+    }
   }
 
   // ---------------------------------------------------------------------

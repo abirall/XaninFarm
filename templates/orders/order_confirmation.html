@@ -70,7 +70,9 @@
           </p>
         {% endif %}
 
-        <div class="mt-8 flex flex-wrap gap-3">
+        {% comment %} print-hidden: this page gets printed or saved as a PDF receipt, and
+           buttons are not part of a receipt. {% endcomment %}
+        <div class="mt-8 flex flex-wrap gap-3 print-hidden">
           <a href="{{ order.get_absolute_url }}" class="btn-primary flex-1 justify-center">
             {% translate "View your order" %}
           </a>

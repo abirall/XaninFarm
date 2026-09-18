@@ -4,6 +4,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="csrf-token" content="{{ csrf_token }}">
+  <meta name="theme-color" content="#183524">
+
+  {% comment %} Marks the document as script-capable before the first paint, which is what
+     gates the scroll-reveal animation in app.css. Inline and synchronous on
+     purpose: deferring it would flash the hidden state, and loading it from a
+     file would mean a page of invisible sections until that file lands. {% endcomment %}
+  <script>document.documentElement.classList.add('js');</script>
 
   <title>{% block title %}{{ site_name }} - {{ site_tagline }}{% endblock %}</title>
   <meta name="description" content="{% block meta_description %}{{ site_tagline }} Fresh cow milk, farm chicken, raw honey, beef, sweets and fish from {{ site_name }}.{% endblock %}">
@@ -24,8 +31,19 @@
      reflow after first paint. {% endcomment %}
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet"
+  {% comment %} Loaded without blocking the first paint: `media="print"` keeps the sheet out
+     of the critical path, and onload promotes it once it has arrived. The fonts
+     already carry display=swap, so text is readable from the first frame in the
+     fallback face and reflows once. The <noscript> copy keeps the real
+     typography for anyone without JS, who would otherwise never get the swap. {% endcomment %}
+  <link rel="preload" as="style"
         href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" media="print" onload="this.media='all';this.onload=null;"
+        href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap">
+  <noscript>
+    <link rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap">
+  </noscript>
 
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
   {% if tailwind_cdn_fallback %}
@@ -39,6 +57,52 @@
      {% templatetag openblock %} static 'js/htmx.min.js' {% templatetag closeblock %}. {% endcomment %}
   <script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js" defer></script>
   <script src="{% static 'js/app.js' %}" defer></script>
+
+  {% comment %} Structured data. Without this a storefront is invisible to rich results -
+     no price, no stock, no star rating in the search listing. Product pages add
+     their own Product and BreadcrumbList via the block below. {% endcomment %}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "{{ request.scheme }}://{{ request.get_host }}/#organization",
+        {% comment %} escapejs, not the default HTML autoescape: these are JSON string bodies,
+           and it renders quotes and newlines as \uXXXX, which JSON accepts. An
+           apostrophe in the farm's name would otherwise end the string early and
+           make the whole block unparseable. {% endcomment %}
+        "name": "{{ site_name|escapejs }}",
+        "url": "{{ request.scheme }}://{{ request.get_host }}/",
+        "logo": "{{ request.scheme }}://{{ request.get_host }}{% static 'img/favicon.svg' %}"
+        {% if site.support_phone %},
+        "contactPoint": {
+          "@type": "ContactPoint",
+          "telephone": "{{ site.support_phone|escapejs }}",
+          "contactType": "customer service"
+        }
+        {% endif %}
+      },
+      {
+        "@type": "WebSite",
+        "@id": "{{ request.scheme }}://{{ request.get_host }}/#website",
+        "url": "{{ request.scheme }}://{{ request.get_host }}/",
+        "name": "{{ site_name|escapejs }}",
+        "publisher": { "@id": "{{ request.scheme }}://{{ request.get_host }}/#organization" },
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": {
+            "@type": "EntryPoint",
+            "urlTemplate": "{{ request.scheme }}://{{ request.get_host }}{% url 'products:list' %}?q={search_term_string}"
+          },
+          "query-input": "required name=search_term_string"
+        }
+      }
+    ]
+  }
+  </script>
+  {% block structured_data %}{% endblock %}
+
   {% block extra_head %}{% endblock %}
 </head>
 

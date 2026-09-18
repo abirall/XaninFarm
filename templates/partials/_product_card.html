@@ -6,8 +6,16 @@
   Stock comparisons fail closed: without the annotation no badge is shown
   rather than a wrong one.
 {% endcomment %}
+{% comment %}
+  focus-within draws the ring on the whole card. The title is a stretched link,
+  so keyboard focus would otherwise ring only the few words of the heading while
+  the actual hit area is the entire card - technically visible, but it reads as
+  if the text is the target rather than the product.
+{% endcomment %}
 <article class="card group relative flex flex-col overflow-hidden transition duration-300
-                ease-out-soft hover:-translate-y-0.5 hover:shadow-card-hover">
+                ease-out-soft hover:-translate-y-0.5 hover:shadow-card-hover
+                focus-within:ring-2 focus-within:ring-farm-600 focus-within:ring-offset-2
+                focus-within:ring-offset-cream-50">
 
   <div class="relative aspect-[4/5] overflow-hidden bg-cream-200">
     {% with image=product.primary_image %}
@@ -101,8 +109,11 @@
           <input type="hidden" name="variant" value="{{ product.default_variant.pk }}">
           <input type="hidden" name="quantity" value="1">
           <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          {% comment %} min-h-11/min-w-11 is 44px: this is the primary action on a phone, sat
+             in a dense grid next to a full-card link, so an undersized target
+             here is a mis-tap straight to the product page. {% endcomment %}
           <button type="submit"
-                  class="btn-primary btn-sm !px-3.5 !py-2.5"
+                  class="btn-primary btn-sm !min-h-11 !min-w-11 !px-3.5"
                   aria-label="{% blocktranslate with name=product.name %}Add {{ name }} to cart{% endblocktranslate %}">
             <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>

@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static i18n farm_extras %}
+{% load static i18n l10n farm_extras %}
 
 {% block title %}{{ product.seo_title|default:product.name }} - {{ site_name }}{% endblock %}
 {% block meta_description %}{{ product.seo_description|default:product.short_description }}{% endblock %}
@@ -10,6 +10,72 @@
   {% if product.primary_image %}
     <meta property="og:image" content="{{ request.scheme }}://{{ request.get_host }}{{ product.primary_image.image.url }}">
   {% endif %}
+{% endblock %}
+
+{% comment %}
+  Product rich results. Every string body goes through escapejs because these are
+  JSON values, not HTML - a quote in a product name would otherwise break the
+  block and Google would drop the whole page's markup, not just that field.
+
+  Price comes from the selected variant rather than product.price_from: the
+  offer has to name the thing actually being sold, and price_from on a
+  multi-pack product is the cheapest pack, not this one.
+{% endcomment %}
+{% block structured_data %}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": "{{ product.name|escapejs }}",
+    "url": "{{ request.scheme }}://{{ request.get_host }}{{ product.get_absolute_url }}",
+    {% if product.short_description %}"description": "{{ product.short_description|escapejs }}",{% endif %}
+    {% if product.primary_image %}"image": "{{ request.scheme }}://{{ request.get_host }}{{ product.primary_image.image.url }}",{% endif %}
+    "category": "{{ product.category.name|escapejs }}",
+    "brand": { "@type": "Brand", "name": "{{ site_name|escapejs }}" },
+    {% if product.rating_count %}
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "{{ product.rating_average|stringformat:'.1f' }}",
+      "reviewCount": "{{ product.rating_count }}"
+    },
+    {% endif %}
+    {% if selected_variant %}
+    "offers": {
+      "@type": "Offer",
+      "url": "{{ request.scheme }}://{{ request.get_host }}{{ product.get_absolute_url }}",
+      {% if selected_variant.sku %}"sku": "{{ selected_variant.sku|escapejs }}",{% endif %}
+      {% comment %} unlocalize: a JSON price must be 1250.00, never the 1,250.00 that
+         Django's thousand separator would emit under some locales. {% endcomment %}
+      "price": "{{ selected_variant.price|unlocalize }}",
+      "priceCurrency": "{{ currency_code }}",
+      "availability": "https://schema.org/{% if product.is_in_stock %}InStock{% else %}OutOfStock{% endif %}",
+      "seller": { "@id": "{{ request.scheme }}://{{ request.get_host }}/#organization" }
+    },
+    {% endif %}
+    "isPartOf": { "@id": "{{ request.scheme }}://{{ request.get_host }}/#website" }
+  }
+  </script>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "{% translate 'Home' %}",
+        "item": "{{ request.scheme }}://{{ request.get_host }}{% url 'core:home' %}"
+      }{% for crumb in breadcrumbs %},
+      {
+        "@type": "ListItem",
+        "position": {{ forloop.counter|add:1 }},
+        "name": "{{ crumb.label|escapejs }}"
+        {% if crumb.url %},"item": "{{ request.scheme }}://{{ request.get_host }}{{ crumb.url }}"{% endif %}
+      }{% endfor %}
+    ]
+  }
+  </script>
 {% endblock %}
 
 {% block content %}
